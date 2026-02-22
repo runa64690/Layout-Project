@@ -7,7 +7,7 @@ from viz import draw_layout
 def main():
     os.makedirs("outputs", exist_ok=True)
 
-    room = Room(width=3.0, height=3.0, exit_x=0.0, exit_y=1.5)
+    room = Room(width=3.0, height=3.0,exit_ax=0.0, exit_ay=1.2,exit_bx=0.0, exit_by=1.8)
 
     before = [
         Furniture("Shelf", x=0.3, y=1.2, w=0.8, d=0.3, h=1.8),

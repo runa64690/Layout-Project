@@ -16,8 +16,12 @@ def draw_layout(room: Room, items: list[Furniture], title: str, save_path: str):
         ax.add_patch(patches.Rectangle((f.x, f.y), f.w, f.d, alpha=0.4))
         ax.text(f.x + f.w/2, f.y + f.d/2, f.name, ha="center", va="center", fontsize=8)
 
-    ax.plot([room.exit_x], [room.exit_y], marker="o")
-    ax.text(room.exit_x, room.exit_y, "EXIT", fontsize=8, ha="left", va="bottom")
+    #旧:出口を点で表示
+    #ax.plot([room.exit_x], [room.exit_y], marker="o")
+
+    #新:出口を線分で表示
+    ax.plot([room.exit_ax, room.exit_bx], [room.exit_ay, room.exit_by],color="red", linewidth=2)
+    ax.text(room.exit_ax, room.exit_ay, "EXIT", fontsize=8, ha="left", va="bottom")
 
     ax.set_title(title)
     plt.tight_layout()

@@ -4,8 +4,10 @@ from dataclasses import dataclass
 class Room:
     width: float
     height: float
-    exit_x: float
-    exit_y: float
+    exit_ax: float
+    exit_ay: float
+    exit_bx: float
+    exit_by: float
 
 @dataclass
 class Furniture:
