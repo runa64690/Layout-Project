@@ -24,7 +24,7 @@ def main() -> None:
 
     validate_layout(room, before)
     r1 = risk_v1(room, before)
-    draw_layout(room, before, title=f"Before　Risk={r1:3f}", save_path="outputs/before.png")
+    draw_layout(room, before, title=f"Before Risk={r1:.3f}", save_path="outputs/before.png")
 
     # 棚だけ移動
     after = [
@@ -34,7 +34,7 @@ def main() -> None:
 
     validate_layout(room, after)
     r2 = risk_v1(room, after)
-    draw_layout(room, after, title=f"After　Risk={r2:3f}", save_path="outputs/after.png")
+    draw_layout(room, after, title=f"After Risk={r2:.3f}", save_path="outputs/after.png")
 
     print("Before Risk:", r1)
     print("After Risk:", r2)

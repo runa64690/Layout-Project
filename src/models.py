@@ -8,7 +8,7 @@ class Room:
     grid_w: int
     grid_h: int
 
-    # ドアの位置
+    # 出口線分
     exit_ax: float
     exit_ay: float
     exit_bx: float
@@ -17,12 +17,12 @@ class Room:
     def assert_rect_inside(self, gx: int, gy: int, gw: int, gd: int, name: str) -> None:
         # 家具の矩形が部屋内に収まっているか確認する
         if gx < 0 or gy < 0:
-            raise ValueError(f"{name}:座標が負です(gx={gx}, gy={gy})")
+            raise ValueError(f"{name}: 座標が負です (gx={gx}, gy={gy})")
         if gw <= 0 or gd <= 0:
-            raise ValueError(f"{name}:サイズが不正です(gw={gw},gd={gd})")
+            raise ValueError(f"{name}: サイズが不正です (gw={gw},gd={gd})")
         if gx + gw > self.grid_w or gy + gd > self.grid_h:
             raise ValueError(
-                f"{name}: 部屋からはみ出しています"
+                f"{name}: 部屋からはみ出しています "
                 f"(x={gx}..{gx + gw - 1},y={gy}..{gy + gd - 1})"
             )
 
