@@ -1,5 +1,14 @@
 import math
+from typing import Callable
+
 from models import Direction, Room, Furniture, FurnitureType
+
+# リスク関数の重みづけ
+DEFAULT_RULE_WEIGHTS = {
+    "fall_hazard_to_bed": 5.0,
+    "exit_blocking_by_tall_items": 3.0,
+    "tv_hazard_near_bed_head": 4.0,
+}
 
 def clamp(v: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, v))
@@ -193,3 +202,43 @@ def score_tv_hazard_near_bed_head(room: Room, items: list[Furniture]) -> tuple[f
             )
 
     return score, violations
+
+# 総合リスクスコア計算関数
+def evaluate_layout_risk(
+        room: Room,
+        items: list[Furniture],
+        enabled_rules: set[str] | None = None,
+        weights: dict[str, float] | None = None,
+) -> dict:
+    rule_funcs: dict[str, Callable[[Room, list[Furniture]], tuple[float, list[str]]]] = {
+        "fall_hazard_to_bed": score_fall_hazard_to_bed,
+        "exit_blocking_by_tall_items": score_exit_blocking_by_tall_items,
+        "tv_hazard_near_bed_head": score_tv_hazard_near_bed_head,
+    }
+
+    active_rules = set(rule_funcs.keys()) if enabled_rules is None else set(enabled_rules)
+
+    merged_weights = dict(DEFAULT_RULE_WEIGHTS)
+    if weights:
+        merged_weights.update(weights)
+
+    breakdown = {name: 0.0 for name in rule_funcs}
+    violations: list[str] = []
+
+    for name, fn in rule_funcs.items():
+        if name not in active_rules:
+            continue
+
+        raw_score, rule_violations = fn(room, items)
+        weighted = raw_score * merged_weights.get(name, 1.0)
+
+        breakdown[name] = weighted
+        violations.extend(rule_violations)
+
+    total = sum(breakdown.values())
+
+    return {
+        "total": total,
+        "breakdown": breakdown,
+        "violations": violations,
+    }
