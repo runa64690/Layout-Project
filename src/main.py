@@ -1,5 +1,5 @@
 import os
-from models import Direction, Room, Furniture, FurnitureType, Room, validate_layout
+from models import Direction, Room, Furniture, FurnitureType, validate_layout
 from risk import risk_v1
 from viz import draw_layout
 
@@ -31,6 +31,21 @@ def main() -> None:
     ]
 
     validate_layout(room, before)
+
+    # main.py の r1/r2 計算後に一時追加して確認
+    from risk import (
+        score_fall_hazard_to_bed,
+        score_exit_blocking_by_tall_items,
+        score_tv_hazard_near_bed_head,
+    )
+
+    s1, v1 = score_fall_hazard_to_bed(room, before)
+    s2, v2 = score_exit_blocking_by_tall_items(room, before)
+    s3, v3 = score_tv_hazard_near_bed_head(room, before)
+    print("Rule1:", s1, v1)
+    print("Rule2:", s2, v2)
+    print("Rule3:", s3, v3)
+
     r1 = risk_v1(room, before)
     draw_layout(room, before, title=f"Before Risk={r1:.3f}", save_path="outputs/before.png")
 
@@ -54,6 +69,8 @@ def main() -> None:
 
     print("Before Risk:", r1)
     print("After Risk:", r2)
+
+    
 
 if __name__ == "__main__":
     main()
