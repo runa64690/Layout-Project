@@ -1,6 +1,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
+
+# risk_v2互換のためにセルの高さ→m変換
+CELL_SIZE_M = 0.25
+
+# 家具の方向
+class Direction(str, Enum):
+    NORTH = "NORTH"
+    EAST = "EAST"
+    SOUTH = "SOUTH"
+    WEST = "WEST"
+
+# 家具の種類
+class FurnitureType(str, Enum):
+    BED = "BED"
+    TV = "TV"
+    TV_STAND = "TV_STAND"
+    STORAGE = "STORAGE"
+    OTHER = "OTHER"
 
 @dataclass
 class Room:
@@ -38,8 +57,16 @@ class Furniture:
     gw: int
     gd: int
 
-    # 高さ(m)
-    h_m: float
+    # 高さはセル数で保持
+    h_cell: int
+
+    furniture_type: FurnitureType = FurnitureType.OTHER
+    fall_dir: Direction | None = None
+    pillow_side: Direction | None = None
+
+    @property
+    def h_m(self) -> float:
+        return self.h_cell * CELL_SIZE_M
 
 
 def validate_layout(room: Room, items: list[Furniture]) -> None:
@@ -48,6 +75,12 @@ def validate_layout(room: Room, items: list[Furniture]) -> None:
 
     for f in items:
         room.assert_rect_inside(f.gx, f.gy, f.gw, f.gd, f.name)
+        
+        if f.h_cell <= 0:
+            raise ValueError(f"{f.name}: h_cell は 1以上にしてください")
+        
+        if f.furniture_type == FurnitureType.BED and f.pillow_side is None:
+            raise ValueError(f"{f.name}: BED は pillow_side が必須です")
         
         for x in range(f.gx, f.gx + f.gw):
             for y in range(f.gy, f.gy + f.gd):

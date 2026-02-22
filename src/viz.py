@@ -25,7 +25,8 @@ def draw_layout(room: Room, items: list[Furniture], title: str, save_path: str) 
         ax.text(
             f.gx + f.gw/2.0,
             f.gy + f.gd/2.0,
-            f"{f.name}\n({f.gw}x{f.gd})",
+            # 家具の名前と高さを表示
+            f"{f.name}\n({f.furniture_type.value} h={f.h_cell})",
             ha="center",
             va="center",
             fontsize=8,
@@ -45,7 +46,7 @@ def draw_layout(room: Room, items: list[Furniture], title: str, save_path: str) 
 
     ax.set_title(title)
     plt.tight_layout()
-    
+
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.savefig(save_path, dpi=200)
     plt.close(fig)

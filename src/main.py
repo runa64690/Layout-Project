@@ -1,5 +1,5 @@
 import os
-from models import Room, Furniture, validate_layout
+from models import Direction, Room, Furniture, FurnitureType, Room, validate_layout
 from risk import risk_v1
 from viz import draw_layout
 
@@ -18,8 +18,16 @@ def main() -> None:
 
     # セル数を直接指定
     before = [
-        Furniture(name="Shelf", gx=1, gy=5, gw=4, gd=2, h_m=1.8),
-        Furniture(name="Bed", gx=4, gy=1,gw=8, gd=4, h_m=0.6),
+        Furniture(
+                 name="Shelf", gx=1, gy=5, gw=4, gd=2, h_cell=7,
+                 furniture_type=FurnitureType.STORAGE,
+                 fall_dir=Direction.EAST,
+        ),
+        Furniture(
+                 name="Bed", gx=4, gy=1,gw=8, gd=4, h_cell=3,
+                 furniture_type=FurnitureType.BED,
+                 pillow_side=Direction.NORTH,
+        ),
     ]
 
     validate_layout(room, before)
@@ -28,8 +36,16 @@ def main() -> None:
 
     # 棚だけ移動
     after = [
-        Furniture(name="Shelf", gx=8, gy=5, gw=4, gd=2, h_m=1.8),
-        Furniture(name="Bed", gx=4, gy=1,gw=8, gd=4, h_m=0.6),
+        Furniture(
+                 name="Shelf", gx=8, gy=5, gw=4, gd=2, h_cell=7,
+                 furniture_type=FurnitureType.STORAGE,
+                 fall_dir=Direction.EAST,
+        ),
+        Furniture(
+                 name="Bed", gx=4, gy=1,gw=8, gd=4, h_cell=3,
+                 furniture_type=FurnitureType.BED,
+                 pillow_side=Direction.NORTH,
+        ),
     ]
 
     validate_layout(room, after)
