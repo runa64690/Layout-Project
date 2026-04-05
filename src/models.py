@@ -21,6 +21,51 @@ class FurnitureType(str, Enum):
     STORAGE = "STORAGE"
     OTHER = "OTHER"
 
+# 家具の固定サイズ、高さ、種別、初期向きを持つプリセット
+@dataclass(frozen=True)
+class FurniturePreset:
+    key: str
+    label: str
+    gw: int
+    gd: int
+    h_cell: int
+    furniture_type: FurnitureType
+    fall_dir: Direction | None = None
+    pillow_side: Direction | None = None
+
+# 家具配置UI上での配置状態を持つ
+@dataclass
+class PlacedFurniture:
+    key: str
+    label: str
+    gx: int | None = None
+    gy: int | None = None
+    rotation: int = 0
+    placed: bool = False
+
+# 家具のプリセット辞書
+FURNITURE_PRESETS = {
+    "shelf": FurniturePreset("shelf","本棚",4,2,7,FurnitureType.STORAGE, fall_dir=Direction.EAST),
+    "bed": FurniturePreset("bed","ベッド",6,4,3,FurnitureType.BED, pillow_side=Direction.NORTH),
+    "table": FurniturePreset("table","テーブル",3,2,3,FurnitureType.OTHER),
+    "tv_unit": FurniturePreset("tv_unit","テレビ台・テレビ",3,2,2,FurnitureType.OTHER),
+    "chair": FurniturePreset("chair","椅子",1,1,2,FurnitureType.OTHER),
+}
+
+# 家具配置UIの回転ヘルパー
+DIRECTION_ORDER = [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]
+
+def rotate_direction(direction: Direction | None, quarter_turns: int) -> Direction | None:
+    if direction is None:
+        return None
+    idx = DIRECTION_ORDER.index(direction)
+    return DIRECTION_ORDER[(idx + quarter_turns) % 4]
+
+def get_rotated_size(gw: int,gd: int,rotation: int) -> tuple[int,int]:
+    if rotation % 2 == 0:
+        return gw, gd
+    return gd, gw
+
 @dataclass
 class Room:
     # グリッドサイズ
@@ -80,7 +125,7 @@ def validate_layout(room: Room, items: list[Furniture]) -> None:
             raise ValueError(f"{f.name}: h_cell は 1以上にしてください")
         
         if f.furniture_type == FurnitureType.BED and f.pillow_side is None:
-            raise ValueError(f"{f.name}: BED は pillow_side が必須です")
+            raise ValueError(f"{f.name}: BED must have pillow_side")
         
         for x in range(f.gx, f.gx + f.gw):
             for y in range(f.gy, f.gy + f.gd):
@@ -88,6 +133,6 @@ def validate_layout(room: Room, items: list[Furniture]) -> None:
                 if key in occupied:
                     other = occupied[key]
                     raise ValueError(
-                        f"重なり検出: cell={key} が {other} と {f.name} で重複しています"
+                        f"Furniture overlap: cell={key} is used by both {other} and {f.name}"
                     )
                 occupied[key] = f.name
