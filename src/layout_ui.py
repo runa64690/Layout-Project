@@ -63,6 +63,7 @@ class FurnitureLayoutApp:
             self.side_frame,
             text="回転",
             state="disabled",
+            command=self.rotate_selected,
         )
         self.rotate_button.pack(fill="x", pady=(0,0))
 
@@ -186,7 +187,7 @@ class FurnitureLayoutApp:
              self.canvas.create_text(
                   (x0 + x1) / 2,
                   (y0 + y1) / 2,
-                  text=placement.label,
+                  text=f"{placement.label}\nR{placement.rotation * 90}",
                   tags=("furniture",),
              )
          
@@ -217,8 +218,27 @@ class FurnitureLayoutApp:
     def invalidate_result(self) -> None:
          self.result_var.set("配置が変更されました。結果を更新するには「決定」を押してください。")
 
+    # 矩形同士が重なっているかの判定
+    def rects_overlap(
+             self,
+             ax: int,
+             ay: int,
+             aw: int,
+             ad: int,
+             bx: int,
+             by: int,
+             bw: int,
+             bd: int
+     ) -> bool:
+         return not(
+              ax + aw <= bx or
+              bx + bw <= ax or
+              ay + ad <= by or
+              by + bd <= ay
+         )
     
     # 配置家具が部屋内に収まるかチェックする
+    # 自分自身との重なりは無視する
     def can_place_furniture(self, key: str, gx: int, gy: int) -> bool:
          preset = FURNITURE_PRESETS[key]
          gw, gd = get_rotated_size(preset.gw, preset.gd, self.placements[key].rotation)
@@ -230,7 +250,44 @@ class FurnitureLayoutApp:
          if gy + gd > self.room.grid_h:
              return False
          
+         for other_key, other in self.placements.items():
+             if other_key == key:
+                 continue
+             if not other.placed or other.gx is None or other.gy is None:
+                 continue
+              
+             other_preset = FURNITURE_PRESETS[other_key]
+             other_gw, other_gd = get_rotated_size(
+                 other_preset.gw,
+                 other_preset.gd,
+                 other.rotation
+             )
+
+             if self.rects_overlap(
+                 gx, gy, gw, gd, other.gx, other.gy, other_gw, other_gd
+             ):
+                 return False
+         
          return True
+    
+    def rotate_selected(self) -> None:
+         if self.selected_key is None:
+              return
+         
+         placement = self.placements[self.selected_key]
+         next_rotation = (placement.rotation + 1) % 4
+
+         old_rotation = placement.rotation
+         placement.rotation = next_rotation
+
+         if placement.placed and placement.gx is not None and placement.gy is not None:
+             if not self.can_place_furniture(self.selected_key, placement.gx, placement.gy):
+                 placement.rotation = old_rotation
+                 messagebox.showwarning("回転不可","回転すると家具が部屋外にはみ出すか、他の家具と重なります。")
+                 return
+             
+         self.draw_furniture()
+         self.invalidate_result()
 
     def select_furniture(self, key: str) -> None:
             self.selected_key = key
