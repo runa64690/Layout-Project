@@ -48,7 +48,7 @@ FURNITURE_PRESETS = {
     "shelf": FurniturePreset("shelf","本棚",4,2,7,FurnitureType.STORAGE, fall_dir=Direction.EAST),
     "bed": FurniturePreset("bed","ベッド",6,4,3,FurnitureType.BED, pillow_side=Direction.NORTH),
     "table": FurniturePreset("table","テーブル",3,2,3,FurnitureType.OTHER),
-    "tv_unit": FurniturePreset("tv_unit","テレビ台・テレビ",3,2,2,FurnitureType.OTHER),
+    "tv_unit": FurniturePreset("tv_unit","テレビ台・テレビ",3,2,2,FurnitureType.TV_STAND, fall_dir=Direction.SOUTH),
     "chair": FurniturePreset("chair","椅子",1,1,2,FurnitureType.OTHER),
 }
 

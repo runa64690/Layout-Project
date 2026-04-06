@@ -68,7 +68,7 @@ def build_fall_zone_rect(item: Furniture) -> tuple[int, int, int, int] | None:
 def build_bed_head_zone_rect(bed: Furniture) -> tuple[int, int, int, int]:
     # ベッドの枕側の1セル帯を返す
     if bed.pillow_side is None:
-        raise ValueError(f"{bed.name}: ベッドのpillow_sideの指定が必要です")
+        raise ValueError(f"{bed.name}: bed must have pillow_side")
     
     gx, gy, gw, gd = bed.gx, bed.gy, bed.gw, bed.gd
 
@@ -81,7 +81,7 @@ def build_bed_head_zone_rect(bed: Furniture) -> tuple[int, int, int, int]:
     if bed.pillow_side == Direction.WEST:
         return (gx - 1, gy, gx, gy + gd)
     
-    raise ValueError(f"{bed.name}: pillow_sideの値が不正です")
+    raise ValueError(f"{bed.name}: invalid pillow_side")
 
 
 # 旧リスク関数
@@ -132,7 +132,7 @@ def score_fall_hazard_to_bed(room: Room, items: list[Furniture]) -> tuple[float,
             # 素点: ベース + 重なり面積
             raw = 1.0 + 0.1 * overlap
             score += raw
-            violations.append(f"{item.name}の倒壊域が{bed.name}と重なっています (overlap={overlap} cells)")
+            violations.append(f"{item.name} fall Zone overlaps with {bed.name} (overlap={overlap} cells)")
 
     return score, violations
 

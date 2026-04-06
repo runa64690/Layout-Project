@@ -2,11 +2,17 @@ import tkinter as tk
 from tkinter import messagebox
 
 from models import (
+    Direction,
+    Furniture,
+    FurnitureType,
+    Room,
     FURNITURE_PRESETS,
     PlacedFurniture,
-    Room,
     get_rotated_size,
+    rotate_direction,
+    validate_layout,
 )
+from risk import evaluate_layout_risk
 
 class FurnitureLayoutApp:
     CELL_PX = 48
@@ -68,8 +74,9 @@ class FurnitureLayoutApp:
         self.rotate_button.pack(fill="x", pady=(0,0))
 
         self.finalize_button = tk.Button(
-            self.side_frame,
-            text="決定",
+             self.side_frame,
+             text="決定",
+             command=self.finalize_layout,
         )
         self.finalize_button.pack(fill="x", pady=(0,12))
 
@@ -289,10 +296,74 @@ class FurnitureLayoutApp:
          self.draw_furniture()
          self.invalidate_result()
 
+
+    # 家具が全て配置されているかチェックする
+    def get_missing_furniture_labels(self) -> list[str]:
+         return [
+              placement.label
+              for placement in self.placements.values()
+              if not placement.placed
+         ]
+    
+    # 決定ボタンを押したときの処理
+    def build_risk_items(self) -> list[Furniture]:
+         items: list[Furniture] = []
+
+         for key, placement in self.placements.items():
+             if not placement.placed or placement.gx is None or placement.gy is None:
+                 continue
+             
+             preset = FURNITURE_PRESETS[key]
+             gw, gd = get_rotated_size(preset.gw, preset.gd, placement.rotation)
+         
+             items.append(
+                 Furniture(
+                     name=placement.label,
+                     gx=placement.gx,
+                     gy=placement.gy,
+                     gw=gw, 
+                     gd=gd,
+                     h_cell=preset.h_cell,
+                     furniture_type=preset.furniture_type,
+                     fall_dir=rotate_direction(preset.fall_dir, placement.rotation),
+                     pillow_side=rotate_direction(preset.pillow_side, placement.rotation),
+                 )
+             )
+
+         return items
+
     def select_furniture(self, key: str) -> None:
-            self.selected_key = key
-            self.rotate_button.config(state="normal")
-            self.draw_furniture()
+         self.selected_key = key
+         self.rotate_button.config(state="normal")
+         self.draw_furniture()
+
+    def finalize_layout(self) -> None:
+         missing = self.get_missing_furniture_labels()
+         if missing:
+             self.result_var.set("未配置の家具があります: " + ", ".join(missing))
+             return
+         
+         try:
+             items = self.build_risk_items()
+             validate_layout(self.room, items)
+             result = evaluate_layout_risk(self.room, items)
+         except ValueError as exc:
+             self.result_var.set(f"レイアウトエラー: {exc}")
+             return
+         
+         lines = [f"総合危険度: {result['total']:.3f}", ""]
+         lines.append("内訳:")
+         for name, score in result["breakdown"].items():
+             lines.append(f"- {name}: {score:.3f}")
+         
+         lines.append("")
+         if result["violations"]:
+             lines.append("検出内容:")
+             lines.extend(f"- {msg}" for msg in result["violations"])
+         else:
+             lines.append("検出内容: なし")
+
+         self.result_var.set("\n".join(lines))
 
     def run(self) -> None:
             self.root.mainloop()
