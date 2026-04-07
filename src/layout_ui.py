@@ -145,6 +145,20 @@ class FurnitureLayoutApp:
          gy = self.room.grid_h - 1 - gy_from_top
          return int(gx), int(gy)
 
+    # 指定したグリッド座標に家具があるかチェックする
+    def find_furniture_at(self, gx: int, gy: int) -> str | None:
+        for key, placement in reversed(list(self.placements.items())):
+            if not placement.placed or placement.gx is None or placement.gy is None:
+                continue
+
+            preset = FURNITURE_PRESETS[key]
+            gw, gd = get_rotated_size(preset.gw, preset.gd, placement.rotation)
+
+            if placement.gx <= gx < placement.gx + gw and placement.gy <= gy < placement.gy + gd:
+                return key
+            
+        return None
+
     def draw_palette(self) -> None:
         for child in self.palette_frame.winfo_children():
             child.destroy()
@@ -201,14 +215,21 @@ class FurnitureLayoutApp:
     # 家具をクリックしたときの処理
     # クリック位置に家具を置く(置ける場合のみ)
     def on_canvas_click(self, event: tk.Event) -> None:
-         if self.selected_key is None:
-             return
-         
          cell = self.canvas_to_grid(event.x, event.y)
          if cell is None:
+             self.clear_selection()
              return
          
          gx, gy = cell
+
+         clicked_key =  self.find_furniture_at(gx, gy)
+         if clicked_key is not None:
+             self.select_furniture(clicked_key)
+             return
+
+         if self.selected_key is None:
+             return
+         
          if not self.can_place_furniture(self.selected_key, gx, gy):
               messagebox.showwarning("配置不可","その位置には置けません。")
               return
@@ -336,6 +357,12 @@ class FurnitureLayoutApp:
          self.selected_key = key
          self.rotate_button.config(state="normal")
          self.draw_furniture()
+
+    # 選択を解除する(キャンバスの空白をクリックしたときなど)
+    def clear_selection(self) -> None:
+        self.selected_key = None
+        self.rotate_button.config(state="disabled")
+        self.draw_furniture()
 
     def finalize_layout(self) -> None:
          missing = self.get_missing_furniture_labels()
