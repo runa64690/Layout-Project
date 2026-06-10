@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "source": "sample",
+    "note": "This placeholder file lets the viewer run before ProcTHOR export overwrites it."
+  },
+  "rooms": [
+    {
+      "id": "room|1",
+      "roomType": "Bedroom",
+      "floorPolygon": [
+        { "x": 0, "y": 0, "z": 0 },
+        { "x": 6, "y": 0, "z": 0 },
+        { "x": 6, "y": 0, "z": 5 },
+        { "x": 0, "y": 0, "z": 5 }
+      ],
+      "floorMaterial": "Wood",
+      "bounds": {
+        "min": { "x": 0, "y": 0, "z": 0 },
+        "max": { "x": 6, "y": 0, "z": 5 }
+      }
+    }
+  ],
+  "walls": [
+    {
+      "id": "wall|1|a",
+      "roomId": "room|1",
+      "material": "WallPaint",
+      "empty": false,
+      "polygon": [
+        { "x": 0, "y": 0, "z": 0 },
+        { "x": 6, "y": 0, "z": 0 },
+        { "x": 0, "y": 2.7, "z": 0 },
+        { "x": 6, "y": 2.7, "z": 0 }
+      ]
+    },
+    {
+      "id": "wall|1|b",
+      "roomId": "room|1",
+      "material": "WallPaint",
+      "empty": false,
+      "polygon": [
+        { "x": 6, "y": 0, "z": 0 },
+        { "x": 6, "y": 0, "z": 5 },
+        { "x": 6, "y": 2.7, "z": 0 },
+        { "x": 6, "y": 2.7, "z": 5 }
+      ]
+    },
+    {
+      "id": "wall|1|c",
+      "roomId": "room|1",
+      "material": "WallPaint",
+      "empty": false,
+      "polygon": [
+        { "x": 6, "y": 0, "z": 5 },
+        { "x": 0, "y": 0, "z": 5 },
+        { "x": 6, "y": 2.7, "z": 5 },
+        { "x": 0, "y": 2.7, "z": 5 }
+      ]
+    },
+    {
+      "id": "wall|1|d",
+      "roomId": "room|1",
+      "material": "WallPaint",
+      "empty": false,
+      "polygon": [
+        { "x": 0, "y": 0, "z": 5 },
+        { "x": 0, "y": 0, "z": 0 },
+        { "x": 0, "y": 2.7, "z": 5 },
+        { "x": 0, "y": 2.7, "z": 0 }
+      ]
+    }
+  ],
+  "doors": [],
+  "windows": [],
+  "objects": [
+    {
+      "id": "bed|1",
+      "parentId": null,
+      "assetId": "Bed_25",
+      "objectType": "Bed",
+      "position": { "x": 1.4, "y": 0.3, "z": 1.3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "size": { "x": 2.0, "y": 0.6, "z": 1.6 },
+      "kinematic": true,
+      "childrenIds": []
+    },
+    {
+      "id": "desk|1",
+      "parentId": null,
+      "assetId": "Desk_1",
+      "objectType": "Desk",
+      "position": { "x": 4.5, "y": 0.38, "z": 1.1 },
+      "rotation": { "x": 0, "y": 90, "z": 0 },
+      "size": { "x": 1.4, "y": 0.76, "z": 0.7 },
+      "kinematic": true,
+      "childrenIds": []
+    },
+    {
+      "id": "chair|1",
+      "parentId": null,
+      "assetId": "Chair_313_1",
+      "objectType": "Chair",
+      "position": { "x": 4.4, "y": 0.45, "z": 2.0 },
+      "rotation": { "x": 0, "y": 180, "z": 0 },
+      "size": { "x": 0.6, "y": 0.9, "z": 0.6 },
+      "kinematic": false,
+      "childrenIds": []
+    },
+    {
+      "id": "table|1",
+      "parentId": null,
+      "assetId": "Dining_Table_1",
+      "objectType": "DiningTable",
+      "position": { "x": 3.0, "y": 0.38, "z": 3.3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "size": { "x": 1.2, "y": 0.76, "z": 0.8 },
+      "kinematic": true,
+      "childrenIds": []
+    }
+  ]
+}
