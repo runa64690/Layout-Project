@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 
+
 from models import (
     Direction,
     Furniture,
@@ -12,7 +13,7 @@ from models import (
     rotate_direction,
     validate_layout,
 )
-from risk import evaluate_layout_risk
+from risk import build_bed_head_zone_rect, evaluate_layout_risk
 
 class FurnitureLayoutApp:
     CELL_PX = 48
@@ -158,6 +159,7 @@ class FurnitureLayoutApp:
                 return key
             
         return None
+    
 
     def draw_palette(self) -> None:
         for child in self.palette_frame.winfo_children():
@@ -211,6 +213,39 @@ class FurnitureLayoutApp:
                   text=f"{placement.label}\nR{placement.rotation * 90}",
                   tags=("furniture",),
              )
+        
+             if key == "bed":
+                 bed_item = Furniture(
+                     name=placement.label,
+                     gx=placement.gx,
+                     gy=placement.gy,
+                     gw=gw,
+                     gd=gd,
+                     h_cell=preset.h_cell,
+                     furniture_type=preset.furniture_type,
+                     pillow_side=rotate_direction(preset.pillow_side, placement.rotation),
+                 )
+
+                 head_x, head_y, head_w, head_d = build_bed_head_zone_rect(bed_item)
+
+                 # 枕ゾーンを青い半透明で描画
+                 hx0, hy_bottom = self.grid_to_canvas(head_x, head_y)
+                 hx1 = hx0 + head_w * self.CELL_PX
+                 hy1 = hy_bottom + self.CELL_PX
+                 hy0 = hy1 - head_d * self.CELL_PX
+
+                 self.canvas.create_rectangle(
+                     hx0,
+                     hy0,
+                     hx1,
+                     hy1,
+                     fill="#0000ff80",
+                     outline="#0000ff",
+                     width=1,
+                     tags=("furniture",),
+                 )
+
+        
          
     # 家具をクリックしたときの処理
     # クリック位置に家具を置く(置ける場合のみ)
