@@ -1,41 +1,41 @@
 import math
 from typing import Callable
 
-from models import Direction, Room, Furniture, FurnitureType
+from models import Direction, Furniture, FurnitureType, Room
 
-# リスク関数の重みづけ
 DEFAULT_RULE_WEIGHTS = {
     "fall_hazard_to_bed": 5.0,
     "exit_blocking_by_tall_items": 3.0,
-    "tv_hazard_near_bed_head": 4.0,
+    "tv_fall_zone_near_bed_head": 4.0,
 }
+
 
 def clamp(v: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, v))
 
+
 def point_to_segment_dist(px: float, py: float, ax: float, ay: float, bx: float, by: float) -> float:
-    # 点(px, py)と線分(ax, ay)-(bx, by)の距離
     abx, aby = bx - ax, by - ay
     apx, apy = px - ax, py - ay
     denom = abx * abx + aby * aby
 
     if denom == 0.0:
         return math.hypot(px - ax, py - ay)
-    
+
     t = (apx * abx + apy * aby) / denom
     t = clamp(t, 0.0, 1.0)
     cx, cy = ax + t * abx, ay + t * aby
     return math.hypot(px - cx, py - cy)
 
+
 def rect_of(item: Furniture) -> tuple[int, int, int, int]:
-    # 家具矩形を(x0,y0,x1,y1)で返す。
     return (item.gx, item.gy, item.gx + item.gw, item.gy + item.gd)
 
+
 def rect_intersection_area_cells(
-        a: tuple[int, int, int, int],
-        b: tuple[int, int, int, int],
+    a: tuple[int, int, int, int],
+    b: tuple[int, int, int, int],
 ) -> int:
-    # 2矩形の重なり面積をセル数で返す
     x0 = max(a[0], b[0])
     y0 = max(a[1], b[1])
     x1 = min(a[2], b[2])
@@ -47,74 +47,69 @@ def rect_intersection_area_cells(
 
 
 def build_fall_zone_rect(item: Furniture) -> tuple[int, int, int, int] | None:
-    # 倒壊領域の矩形を返す(家具外側にh_cellだけ伸ばした帯)
-    # fall_dirがNoneのときは倒壊なしとみなす
     if item.fall_dir is None:
         return None
-    
+
     gx, gy, gw, gd, h = item.gx, item.gy, item.gw, item.gd, item.h_cell
 
     if item.fall_dir == Direction.NORTH:
         return (gx, gy + gd, gx + gw, gy + gd + h)
-    elif item.fall_dir == Direction.EAST:
+    if item.fall_dir == Direction.EAST:
         return (gx + gw, gy, gx + gw + h, gy + gd)
-    elif item.fall_dir == Direction.SOUTH:
+    if item.fall_dir == Direction.SOUTH:
         return (gx, gy - h, gx + gw, gy)
-    elif item.fall_dir == Direction.WEST:
+    if item.fall_dir == Direction.WEST:
         return (gx - h, gy, gx, gy + gd)
-    
-    return
+
+    return None
+
 
 def build_bed_head_zone_rect(bed: Furniture) -> tuple[int, int, int, int]:
-    # ベッドの枕側の1セル帯を返す
     if bed.pillow_side is None:
         raise ValueError(f"{bed.name}: bed must have pillow_side")
-    
+
     gx, gy, gw, gd = bed.gx, bed.gy, bed.gw, bed.gd
+    band = 2
 
     if bed.pillow_side == Direction.NORTH:
-        return (gx, gy + gd, gx + gw, gy + gd + 1)
+        return (gx, gy + gd, gx + gw, gy + gd + band)
     if bed.pillow_side == Direction.SOUTH:
-        return (gx, gy - 1, gx + gw, gy)
+        return (gx, gy - band, gx + gw, gy)
     if bed.pillow_side == Direction.EAST:
-        return (gx + gw, gy, gx + gw + 1, gy + gd)
+        return (gx + gw, gy, gx + gw + band, gy + gd)
     if bed.pillow_side == Direction.WEST:
-        return (gx - 1, gy, gx, gy + gd)
-    
+        return (gx - band, gy, gx, gy + gd)
+
     raise ValueError(f"{bed.name}: invalid pillow_side")
 
 
-# 旧リスク関数
 def risk_v1(room: Room, items: list[Furniture]) -> float:
-    #　出口線分に近い家具ほど、かつ背の高い家具ほどリスクが高い簡易モデル
     total = 0.0
 
-    for f in items:
-        cx = f.gx + f.gw / 2.0
-        cy = f.gy + f.gd / 2.0
-
+    for item in items:
+        cx = item.gx + item.gw / 2.0
+        cy = item.gy + item.gd / 2.0
         dist = point_to_segment_dist(
-            cx, cy,
-            room.exit_ax, room.exit_ay,
-            room.exit_bx, room.exit_by
+            cx,
+            cy,
+            room.exit_ax,
+            room.exit_ay,
+            room.exit_bx,
+            room.exit_by,
         )
 
-        height_factor = 0.5 + 0.5 * (f.h_m / 2.0)
+        height_factor = 0.5 + 0.5 * (item.h_m / 2.0)
         total += (1.0 / (dist + 0.2)) * height_factor
 
     return total
 
-# 新リスク関数3種
 
 def score_fall_hazard_to_bed(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
-    # ルール①: 家具の倒壊域にベッドが入ると危険
-
     del room
 
     score = 0.0
     violations: list[str] = []
-
-    beds = [f for f in items if f.furniture_type == FurnitureType.BED]
+    beds = [item for item in items if item.furniture_type == FurnitureType.BED]
 
     for item in items:
         if item.furniture_type == FurnitureType.BED:
@@ -129,16 +124,34 @@ def score_fall_hazard_to_bed(room: Room, items: list[Furniture]) -> tuple[float,
             if overlap <= 0:
                 continue
 
-            # 素点: ベース + 重なり面積
             raw = 1.0 + 0.1 * overlap
             score += raw
-            violations.append(f"{item.name} fall Zone overlaps with {bed.name} (overlap={overlap} cells)")
+            violations.append(
+                f"{item.name} fall zone overlaps with {bed.name} (overlap={overlap} cells)"
+            )
 
     return score, violations
 
-def score_exit_blocking_by_tall_items(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
-    # ルール②: 背の高い家具(h_cell >= 5)が出口線分から2セル以内にあると危険
 
+def total_fall_hazard_overlap_cells(items: list[Furniture]) -> int:
+    total_overlap = 0
+    beds = [item for item in items if item.furniture_type == FurnitureType.BED]
+
+    for item in items:
+        if item.furniture_type == FurnitureType.BED:
+            continue
+
+        zone = build_fall_zone_rect(item)
+        if zone is None:
+            continue
+
+        for bed in beds:
+            total_overlap += rect_intersection_area_cells(zone, rect_of(bed))
+
+    return total_overlap
+
+
+def score_exit_blocking_by_tall_items(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
     score = 0.0
     violations: list[str] = []
 
@@ -163,57 +176,55 @@ def score_exit_blocking_by_tall_items(room: Room, items: list[Furniture]) -> tup
         if dist > near_exit_threshold:
             continue
 
-        # 近いほど加点
         raw = 1.0 + (near_exit_threshold - dist)
         score += raw
-        violations.append(
-            f"[Rule2] {item.name} (h={item.h_cell}) が出口近傍 dist={dist:.2f}"
-        )
+        violations.append(f"[Rule2] {item.name} is near exit dist={dist:.2f}")
 
     return score, violations
 
-def score_tv_hazard_near_bed_head(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
-    # ルール③: テレビなどの画面がベッドの枕側近くにあると危険
 
+def score_tv_fall_zone_near_bed_head(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
     del room
 
     score = 0.0
     violations: list[str] = []
 
-    beds = [f for f in items if f.furniture_type == FurnitureType.BED]
+    beds = [item for item in items if item.furniture_type == FurnitureType.BED]
     tv_items = [
-        f
-        for f in items
-        if f.furniture_type in {FurnitureType.TV, FurnitureType.TV_STAND}
+        item
+        for item in items
+        if item.furniture_type in {FurnitureType.TV, FurnitureType.TV_STAND}
     ]
 
     for bed in beds:
         head_zone = build_bed_head_zone_rect(bed)
 
         for tv in tv_items:
-            overlap = rect_intersection_area_cells(head_zone, rect_of(tv))
+            fall_zone = build_fall_zone_rect(tv)
+            overlap = 0 if fall_zone is None else rect_intersection_area_cells(head_zone, fall_zone)
             if overlap <= 0:
                 continue
 
             raw = 1.0 + 0.1 * overlap
             score += raw
+
             violations.append(
-                f"[Rule3] {tv.name} が {bed.name} の枕側帯と重なり ({overlap} cells)"
+                f"[TVFallHead] {tv.name} fall zone overlaps {bed.name} head zone ({overlap} cells)"
             )
 
     return score, violations
 
-# 総合リスクスコア計算関数
+
 def evaluate_layout_risk(
-        room: Room,
-        items: list[Furniture],
-        enabled_rules: set[str] | None = None,
-        weights: dict[str, float] | None = None,
+    room: Room,
+    items: list[Furniture],
+    enabled_rules: set[str] | None = None,
+    weights: dict[str, float] | None = None,
 ) -> dict:
     rule_funcs: dict[str, Callable[[Room, list[Furniture]], tuple[float, list[str]]]] = {
         "fall_hazard_to_bed": score_fall_hazard_to_bed,
         "exit_blocking_by_tall_items": score_exit_blocking_by_tall_items,
-        "tv_hazard_near_bed_head": score_tv_hazard_near_bed_head,
+        "tv_fall_zone_near_bed_head": score_tv_fall_zone_near_bed_head,
     }
 
     active_rules = set(rule_funcs.keys()) if enabled_rules is None else set(enabled_rules)
@@ -231,7 +242,6 @@ def evaluate_layout_risk(
 
         raw_score, rule_violations = fn(room, items)
         weighted = raw_score * merged_weights.get(name, 1.0)
-
         breakdown[name] = weighted
         violations.extend(rule_violations)
 
