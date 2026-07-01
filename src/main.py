@@ -1,5 +1,5 @@
-from models import Room
-from layout_ui import FurnitureLayoutApp
+from design_models import Room
+from layout_app import FurnitureLayoutApp
 
 def main() -> None:
     room = Room(

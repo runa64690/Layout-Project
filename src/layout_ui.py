@@ -1,3 +1,6 @@
+from layout_app import FurnitureLayoutApp
+"""
+
 import tkinter as tk
 from tkinter import messagebox
 
@@ -471,3 +474,4 @@ class FurnitureLayoutApp:
 
     def run(self) -> None:
         self.root.mainloop()
+"""

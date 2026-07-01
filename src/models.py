@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from design_models import *
+"""
+
+from dataclasses import dataclass, field
 from enum import Enum
 
 CELL_SIZE_M = 0.25
@@ -18,7 +21,22 @@ class FurnitureType(str, Enum):
     TV = "TV"
     TV_STAND = "TV_STAND"
     STORAGE = "STORAGE"
+    TABLE = "TABLE"
+    SEAT = "SEAT"
     OTHER = "OTHER"
+
+
+@dataclass(frozen=True)
+class ClearanceRule:
+    min_cells: int
+    mode: str
+
+
+@dataclass(frozen=True)
+class PairwiseRule:
+    other_key: str
+    min_distance_cells: int
+    max_distance_cells: int
 
 
 @dataclass(frozen=True)
@@ -31,6 +49,9 @@ class FurniturePreset:
     furniture_type: FurnitureType
     fall_dir: Direction | None = None
     pillow_side: Direction | None = None
+    clearance: ClearanceRule | None = None
+    pairwise_rules: tuple[PairwiseRule, ...] = ()
+    conversation_seat: bool = False
 
 
 @dataclass
@@ -151,3 +172,4 @@ def validate_layout(room: Room, items: list[Furniture]) -> None:
                         f"Furniture overlap: cell={key} is used by both {other} and {item.name}"
                     )
                 occupied[key] = item.name
+"""
