@@ -447,13 +447,14 @@ def evaluate_layout_cost(
         merged_weights.update(weights)
 
     validate_layout(room, items)
+    scored_items = [item for item in items if not item.ceiling_mounted]
 
     breakdown = {name: 0.0 for name in rule_funcs}
     violations: list[str] = []
     for name, func in rule_funcs.items():
         if name not in active_terms:
             continue
-        raw_score, local_violations = func(room, items)
+        raw_score, local_violations = func(room, scored_items)
         weighted_score = raw_score * merged_weights.get(name, 1.0)
         breakdown[name] = weighted_score
         violations.extend(local_violations)

@@ -27,6 +27,7 @@ class FurnitureType(str, Enum):
     STORAGE = "STORAGE"
     TABLE = "TABLE"
     SEAT = "SEAT"
+    CEILING_LIGHT = "CEILING_LIGHT"
     OTHER = "OTHER"
 
 
@@ -56,6 +57,7 @@ class FurniturePreset:
     clearance: ClearanceRule | None = None
     pairwise_rules: tuple[PairwiseRule, ...] = ()
     conversation_seat: bool = False
+    ceiling_mounted: bool = False
 
 
 @dataclass
@@ -195,6 +197,7 @@ class Furniture:
     clearance: ClearanceRule | None = None
     pairwise_rules: tuple[PairwiseRule, ...] = field(default_factory=tuple)
     conversation_seat: bool = False
+    ceiling_mounted: bool = False
 
     @property
     def h_m(self) -> float:
@@ -257,6 +260,15 @@ FURNITURE_PRESETS: dict[str, FurniturePreset] = {
         pairwise_rules=(PairwiseRule(other_key="table", min_distance_cells=1, max_distance_cells=4),),
         conversation_seat=True,
     ),
+    "ceiling_light": FurniturePreset(
+        key="ceiling_light",
+        label="Ceiling Light",
+        gw=2,
+        gd=2,
+        h_cell=1,
+        furniture_type=FurnitureType.CEILING_LIGHT,
+        ceiling_mounted=True,
+    ),
 }
 
 
@@ -297,6 +309,7 @@ def build_furniture_from_placement(key: str, placement: PlacedFurniture) -> Furn
         clearance=preset.clearance,
         pairwise_rules=preset.pairwise_rules,
         conversation_seat=preset.conversation_seat,
+        ceiling_mounted=preset.ceiling_mounted,
     )
 
 
@@ -324,7 +337,8 @@ def clone_placements(placements: dict[str, PlacedFurniture]) -> dict[str, Placed
 
 
 def validate_layout(room: Room, items: list[Furniture]) -> None:
-    occupied: dict[tuple[int, int], str] = {}
+    floor_occupied: dict[tuple[int, int], str] = {}
+    ceiling_occupied: dict[tuple[int, int], str] = {}
 
     for item in items:
         room.assert_rect_inside(item.gx, item.gy, item.gw, item.gd, item.name)
@@ -338,6 +352,7 @@ def validate_layout(room: Room, items: list[Furniture]) -> None:
         for x in range(item.gx, item.gx + item.gw):
             for y in range(item.gy, item.gy + item.gd):
                 key = (x, y)
+                occupied = ceiling_occupied if item.ceiling_mounted else floor_occupied
                 if key in occupied:
                     other = occupied[key]
                     raise ValueError(
@@ -346,5 +361,5 @@ def validate_layout(room: Room, items: list[Furniture]) -> None:
                 occupied[key] = item.name
 
     for anchor in room.door_anchor_cells():
-        if anchor in occupied:
-            raise ValueError(f"Door clearance blocked at cell={anchor} by {occupied[anchor]}")
+        if anchor in floor_occupied:
+            raise ValueError(f"Door clearance blocked at cell={anchor} by {floor_occupied[anchor]}")

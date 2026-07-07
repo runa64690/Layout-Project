@@ -127,24 +127,27 @@ class MCMCSolver:
         gw, gd = get_rotated_size(preset.gw, preset.gd, rotation)
         if gx < 0 or gy < 0 or gx + gw > room.grid_w or gy + gd > room.grid_h:
             return False
-        for anchor_x, anchor_y in room.door_anchor_cells():
-            if gx <= anchor_x < gx + gw and gy <= anchor_y < gy + gd:
-                return False
-        for door in room.doors:
-            front_rect = build_door_front_rect(room, door)
-            if front_rect is None:
-                continue
-            if not (
-                gx + gw <= front_rect[0]
-                or front_rect[2] <= gx
-                or gy + gd <= front_rect[1]
-                or front_rect[3] <= gy
-            ):
-                return False
+        if not preset.ceiling_mounted:
+            for anchor_x, anchor_y in room.door_anchor_cells():
+                if gx <= anchor_x < gx + gw and gy <= anchor_y < gy + gd:
+                    return False
+            for door in room.doors:
+                front_rect = build_door_front_rect(room, door)
+                if front_rect is None:
+                    continue
+                if not (
+                    gx + gw <= front_rect[0]
+                    or front_rect[2] <= gx
+                    or gy + gd <= front_rect[1]
+                    or front_rect[3] <= gy
+                ):
+                    return False
         for other_key, other in placements.items():
             if other_key == key or not other.placed or other.gx is None or other.gy is None:
                 continue
             other_preset = FURNITURE_PRESETS[other_key]
+            if other_preset.ceiling_mounted != preset.ceiling_mounted:
+                continue
             other_gw, other_gd = get_rotated_size(other_preset.gw, other_preset.gd, other.rotation)
             if not (
                 gx + gw <= other.gx
@@ -234,13 +237,20 @@ class MCMCSolver:
             occupied.append((key, placement.gx, placement.gy, gw, gd))
 
         for index, (_, ax, ay, aw, ad) in enumerate(occupied):
-            for _, bx, by, bw, bd in occupied[index + 1 :]:
+            a_key = occupied[index][0]
+            a_preset = FURNITURE_PRESETS[a_key]
+            for b_key, bx, by, bw, bd in occupied[index + 1 :]:
+                b_preset = FURNITURE_PRESETS[b_key]
+                if a_preset.ceiling_mounted != b_preset.ceiling_mounted:
+                    continue
                 if not (ax + aw <= bx or bx + bw <= ax or ay + ad <= by or by + bd <= ay):
                     overlap_w = min(ax + aw, bx + bw) - max(ax, bx)
                     overlap_h = min(ay + ad, by + bd) - max(ay, by)
                     penalty += max(1, overlap_w * overlap_h) * 50.0
         for door_x, door_y in room.door_anchor_cells():
-            for _, ax, ay, aw, ad in occupied:
+            for key, ax, ay, aw, ad in occupied:
+                if FURNITURE_PRESETS[key].ceiling_mounted:
+                    continue
                 if ax <= door_x < ax + aw and ay <= door_y < ay + ad:
                     penalty += 150.0
         return penalty

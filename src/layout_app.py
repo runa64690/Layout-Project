@@ -7,6 +7,7 @@ from design_models import (
     Direction,
     FURNITURE_PRESETS,
     Furniture,
+    FurnitureType,
     PlacedFurniture,
     Room,
     WallOpening,
@@ -64,12 +65,14 @@ class FurnitureLayoutApp:
         self.candidates: list[LayoutSolution] = []
         self.solver = MCMCSolver()
         self.show_hazard_zones = tk.BooleanVar(value=True)
+        self.show_ceiling_furniture = tk.BooleanVar(value=True)
         self.furniture_colors = {
             "shelf": "#c97b63",
             "bed": "#7aa6c2",
             "table": "#9b8f7a",
             "tv_unit": "#6c7a89",
             "chair": "#8c6bb1",
+            "ceiling_light": "#f4c542",
         }
         self.opening_colors = {"door": "#cc2936", "window": "#1d4ed8"}
 
@@ -124,12 +127,20 @@ class FurnitureLayoutApp:
         )
         self.hazard_zone_toggle.grid(row=3, column=0, sticky="w", pady=(2, 12))
 
-        tk.Label(self.side_frame, text="Suggestions", anchor="w").grid(row=4, column=0, sticky="ew")
+        self.ceiling_toggle = tk.Checkbutton(
+            self.side_frame,
+            text="Show ceiling furniture",
+            variable=self.show_ceiling_furniture,
+            command=self.draw_furniture,
+        )
+        self.ceiling_toggle.grid(row=4, column=0, sticky="w", pady=(0, 12))
+
+        tk.Label(self.side_frame, text="Suggestions", anchor="w").grid(row=5, column=0, sticky="ew")
 
         self.candidate_frame = tk.Frame(self.side_frame, bd=1, relief="solid", padx=6, pady=6)
-        self.candidate_frame.grid(row=5, column=0, sticky="ew")
+        self.candidate_frame.grid(row=6, column=0, sticky="ew")
 
-        tk.Label(self.side_frame, text="Score", anchor="w").grid(row=6, column=0, sticky="ew", pady=(12, 0))
+        tk.Label(self.side_frame, text="Score", anchor="w").grid(row=7, column=0, sticky="ew", pady=(12, 0))
         self.result_label = tk.Text(
             self.side_frame,
             width=38,
@@ -141,8 +152,8 @@ class FurnitureLayoutApp:
             wrap="word",
             borderwidth=1,
         )
-        self.result_label.grid(row=7, column=0, sticky="nsew")
-        self.side_frame.rowconfigure(7, weight=1)
+        self.result_label.grid(row=8, column=0, sticky="nsew")
+        self.side_frame.rowconfigure(8, weight=1)
 
     def set_result_text(self, text: str) -> None:
         self.result_label.config(state="normal")
@@ -228,6 +239,8 @@ class FurnitureLayoutApp:
                 continue
 
             item = build_furniture_from_placement(key, placement)
+            if item.ceiling_mounted and not self.show_ceiling_furniture.get():
+                continue
             x0, y0, x1, y1 = self.rect_to_canvas(item.gx, item.gy, item.gw, item.gd)
 
             fall_zone = build_fall_zone_rect(item)
@@ -254,6 +267,11 @@ class FurnitureLayoutApp:
             width = 3 if key == self.selected_key else 1
             if key == self.hover_key:
                 width = max(width, 2)
+            stipple = ""
+            if self.is_editing_ceiling_furniture() and not item.ceiling_mounted:
+                stipple = "gray50"
+            if self.is_editing_floor_furniture() and item.ceiling_mounted:
+                stipple = "gray50"
             self.canvas.create_rectangle(
                 x0,
                 y0,
@@ -262,12 +280,14 @@ class FurnitureLayoutApp:
                 fill=color,
                 outline="#222222",
                 width=width,
+                stipple=stipple,
                 tags=("furniture", f"furniture:{key}"),
             )
             self.canvas.create_text(
                 (x0 + x1) / 2,
                 (y0 + y1) / 2,
                 text=f"{placement.label}\nR{placement.rotation * 90}",
+                fill="#666666" if stipple else "#000000",
                 tags=("furniture",),
             )
 
@@ -392,6 +412,8 @@ class FurnitureLayoutApp:
             if not placement.placed or placement.gx is None or placement.gy is None:
                 continue
             preset = FURNITURE_PRESETS[key]
+            if preset.ceiling_mounted and not self.show_ceiling_furniture.get():
+                continue
             gw, gd = get_rotated_size(preset.gw, preset.gd, placement.rotation)
             if placement.gx <= gx < placement.gx + gw and placement.gy <= gy < placement.gy + gd:
                 return key
@@ -415,23 +437,38 @@ class FurnitureLayoutApp:
         gw, gd = get_rotated_size(preset.gw, preset.gd, self.placements[key].rotation)
         if gx < 0 or gy < 0 or gx + gw > self.room.grid_w or gy + gd > self.room.grid_h:
             return False
-        for anchor_x, anchor_y in self.room.door_anchor_cells():
-            if gx <= anchor_x < gx + gw and gy <= anchor_y < gy + gd:
-                return False
-        for door in self.room.doors:
-            front_rect = build_door_front_rect(self.room, door)
-            if front_rect is None:
-                continue
-            if self.rects_overlap(gx, gy, gw, gd, front_rect[0], front_rect[1], front_rect[2] - front_rect[0], front_rect[3] - front_rect[1]):
-                return False
+        if not preset.ceiling_mounted:
+            for anchor_x, anchor_y in self.room.door_anchor_cells():
+                if gx <= anchor_x < gx + gw and gy <= anchor_y < gy + gd:
+                    return False
+            for door in self.room.doors:
+                front_rect = build_door_front_rect(self.room, door)
+                if front_rect is None:
+                    continue
+                if self.rects_overlap(gx, gy, gw, gd, front_rect[0], front_rect[1], front_rect[2] - front_rect[0], front_rect[3] - front_rect[1]):
+                    return False
         for other_key, other in self.placements.items():
             if other_key == key or other_key == ignore_key or not other.placed or other.gx is None or other.gy is None:
                 continue
             other_preset = FURNITURE_PRESETS[other_key]
+            if other_preset.ceiling_mounted != preset.ceiling_mounted:
+                continue
             other_gw, other_gd = get_rotated_size(other_preset.gw, other_preset.gd, other.rotation)
             if self.rects_overlap(gx, gy, gw, gd, other.gx, other.gy, other_gw, other_gd):
                 return False
         return True
+
+    def is_editing_ceiling_furniture(self) -> bool:
+        active_key = self.dragging_key or self.selected_key
+        if active_key is None:
+            return False
+        return FURNITURE_PRESETS[active_key].ceiling_mounted
+
+    def is_editing_floor_furniture(self) -> bool:
+        active_key = self.dragging_key or self.selected_key
+        if active_key is not None:
+            return not FURNITURE_PRESETS[active_key].ceiling_mounted
+        return self.selected_opening is not None
 
     def draw_drag_preview(self) -> None:
         if self.dragging_key is None or self.drag_hover_cell is None:
