@@ -18,6 +18,7 @@ from design_models import (
     rotate_direction,
 )
 from layout_cost import (
+    build_door_front_rect,
     build_fall_zone_rect,
     build_window_scatter_rect,
     evaluate_layout_cost,
@@ -31,6 +32,9 @@ class FurnitureLayoutApp:
     GRID_MARGIN = 24
     RULE_LABELS = {
         "clearance_violation": "Clearance",
+        "door_front_clearance_penalty": "Door front clear",
+        "door_front_fall_penalty": "Door front fall",
+        "window_scatter_penalty": "Window scatter",
         "circulation_penalty": "Circulation",
         "pairwise_distance_penalty": "Pairwise",
         "conversation_penalty": "Conversation",
@@ -53,10 +57,13 @@ class FurnitureLayoutApp:
         }
         self.selected_key: str | None = None
         self.selected_opening: tuple[str, int] | None = None
+        self.hover_key: str | None = None
+        self.dragging_key: str | None = None
+        self.drag_origin: tuple[int | None, int | None, int] | None = None
+        self.drag_hover_cell: tuple[int, int] | None = None
         self.candidates: list[LayoutSolution] = []
         self.solver = MCMCSolver()
-        self.show_fall_zones = tk.BooleanVar(value=True)
-        self.show_window_zones = tk.BooleanVar(value=True)
+        self.show_hazard_zones = tk.BooleanVar(value=True)
         self.furniture_colors = {
             "shelf": "#c97b63",
             "bed": "#7aa6c2",
@@ -87,6 +94,10 @@ class FurnitureLayoutApp:
         )
         self.canvas.grid(row=0, column=1, sticky="nsew")
         self.canvas.bind("<Button-1>", self.on_canvas_click)
+        self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
+        self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)
+        self.canvas.bind("<Motion>", self.on_canvas_hover)
+        self.canvas.bind("<Leave>", self.on_canvas_leave)
 
         self.side_frame = tk.Frame(self.root, padx=12, pady=12)
         self.side_frame.grid(row=0, column=2, sticky="nsew")
@@ -105,28 +116,20 @@ class FurnitureLayoutApp:
         )
         self.generate_button.grid(row=2, column=0, sticky="ew", pady=(8, 12))
 
-        self.fall_zone_toggle = tk.Checkbutton(
+        self.hazard_zone_toggle = tk.Checkbutton(
             self.side_frame,
-            text="Show collapse zones",
-            variable=self.show_fall_zones,
+            text="Show hazard zones",
+            variable=self.show_hazard_zones,
             command=self.draw_furniture,
         )
-        self.fall_zone_toggle.grid(row=3, column=0, sticky="w")
+        self.hazard_zone_toggle.grid(row=3, column=0, sticky="w", pady=(2, 12))
 
-        self.window_zone_toggle = tk.Checkbutton(
-            self.side_frame,
-            text="Show glass scatter zones",
-            variable=self.show_window_zones,
-            command=self.draw_furniture,
-        )
-        self.window_zone_toggle.grid(row=4, column=0, sticky="w", pady=(2, 12))
-
-        tk.Label(self.side_frame, text="Suggestions", anchor="w").grid(row=5, column=0, sticky="ew")
+        tk.Label(self.side_frame, text="Suggestions", anchor="w").grid(row=4, column=0, sticky="ew")
 
         self.candidate_frame = tk.Frame(self.side_frame, bd=1, relief="solid", padx=6, pady=6)
-        self.candidate_frame.grid(row=6, column=0, sticky="ew")
+        self.candidate_frame.grid(row=5, column=0, sticky="ew")
 
-        tk.Label(self.side_frame, text="Score", anchor="w").grid(row=7, column=0, sticky="ew", pady=(12, 0))
+        tk.Label(self.side_frame, text="Score", anchor="w").grid(row=6, column=0, sticky="ew", pady=(12, 0))
         self.result_label = tk.Text(
             self.side_frame,
             width=38,
@@ -138,8 +141,8 @@ class FurnitureLayoutApp:
             wrap="word",
             borderwidth=1,
         )
-        self.result_label.grid(row=8, column=0, sticky="nsew")
-        self.side_frame.rowconfigure(8, weight=1)
+        self.result_label.grid(row=7, column=0, sticky="nsew")
+        self.side_frame.rowconfigure(7, weight=1)
 
     def set_result_text(self, text: str) -> None:
         self.result_label.config(state="normal")
@@ -213,8 +216,11 @@ class FurnitureLayoutApp:
         self.canvas.delete("furniture")
         self.canvas.delete("fall_zone")
         self.canvas.delete("window_zone")
+        self.canvas.delete("door_zone")
+        self.canvas.delete("preview")
 
-        if self.show_window_zones.get():
+        if self.show_hazard_zones.get():
+            self.draw_door_front_zones()
             self.draw_window_zones()
 
         for key, placement in self.placements.items():
@@ -225,7 +231,7 @@ class FurnitureLayoutApp:
             x0, y0, x1, y1 = self.rect_to_canvas(item.gx, item.gy, item.gw, item.gd)
 
             fall_zone = build_fall_zone_rect(item)
-            if self.show_fall_zones.get() and fall_zone is not None:
+            if self.show_hazard_zones.get() and fall_zone is not None:
                 fx0, fy0, fx1, fy1 = self.rect_to_canvas(
                     fall_zone[0],
                     fall_zone[1],
@@ -246,6 +252,8 @@ class FurnitureLayoutApp:
 
             color = self.furniture_colors.get(key, "#aaaaaa")
             width = 3 if key == self.selected_key else 1
+            if key == self.hover_key:
+                width = max(width, 2)
             self.canvas.create_rectangle(
                 x0,
                 y0,
@@ -282,6 +290,9 @@ class FurnitureLayoutApp:
             self.canvas.tag_lower("fall_zone", "furniture")
         if self.canvas.find_withtag("window_zone") and self.canvas.find_withtag("furniture"):
             self.canvas.tag_lower("window_zone", "furniture")
+        if self.canvas.find_withtag("door_zone") and self.canvas.find_withtag("furniture"):
+            self.canvas.tag_lower("door_zone", "furniture")
+        self.draw_drag_preview()
 
     def _draw_openings(self, kind: str, openings: list[WallOpening], label: str) -> None:
         for index, opening in enumerate(openings):
@@ -314,6 +325,29 @@ class FurnitureLayoutApp:
                 width=2,
                 dash=(4, 3),
                 tags=("window_zone",),
+            )
+
+    def draw_door_front_zones(self) -> None:
+        for door in self.room.doors:
+            front_zone = build_door_front_rect(self.room, door)
+            if front_zone is None:
+                continue
+            x0, y0, x1, y1 = self.rect_to_canvas(
+                front_zone[0],
+                front_zone[1],
+                front_zone[2] - front_zone[0],
+                front_zone[3] - front_zone[1],
+            )
+            self.canvas.create_rectangle(
+                x0,
+                y0,
+                x1,
+                y1,
+                fill="#fee2e2",
+                outline="#dc2626",
+                width=2,
+                dash=(5, 4),
+                tags=("door_zone",),
             )
 
     def _add_opening_button(self, kind: str, index: int, opening: WallOpening) -> None:
@@ -376,7 +410,7 @@ class FurnitureLayoutApp:
     ) -> bool:
         return not (ax + aw <= bx or bx + bw <= ax or ay + ad <= by or by + bd <= ay)
 
-    def can_place_furniture(self, key: str, gx: int, gy: int) -> bool:
+    def can_place_furniture(self, key: str, gx: int, gy: int, ignore_key: str | None = None) -> bool:
         preset = FURNITURE_PRESETS[key]
         gw, gd = get_rotated_size(preset.gw, preset.gd, self.placements[key].rotation)
         if gx < 0 or gy < 0 or gx + gw > self.room.grid_w or gy + gd > self.room.grid_h:
@@ -384,14 +418,43 @@ class FurnitureLayoutApp:
         for anchor_x, anchor_y in self.room.door_anchor_cells():
             if gx <= anchor_x < gx + gw and gy <= anchor_y < gy + gd:
                 return False
+        for door in self.room.doors:
+            front_rect = build_door_front_rect(self.room, door)
+            if front_rect is None:
+                continue
+            if self.rects_overlap(gx, gy, gw, gd, front_rect[0], front_rect[1], front_rect[2] - front_rect[0], front_rect[3] - front_rect[1]):
+                return False
         for other_key, other in self.placements.items():
-            if other_key == key or not other.placed or other.gx is None or other.gy is None:
+            if other_key == key or other_key == ignore_key or not other.placed or other.gx is None or other.gy is None:
                 continue
             other_preset = FURNITURE_PRESETS[other_key]
             other_gw, other_gd = get_rotated_size(other_preset.gw, other_preset.gd, other.rotation)
             if self.rects_overlap(gx, gy, gw, gd, other.gx, other.gy, other_gw, other_gd):
                 return False
         return True
+
+    def draw_drag_preview(self) -> None:
+        if self.dragging_key is None or self.drag_hover_cell is None:
+            return
+        gx, gy = self.drag_hover_cell
+        preset = FURNITURE_PRESETS[self.dragging_key]
+        gw, gd = get_rotated_size(preset.gw, preset.gd, self.placements[self.dragging_key].rotation)
+        x0, y0, x1, y1 = self.rect_to_canvas(gx, gy, gw, gd)
+        allowed = self.can_place_furniture(self.dragging_key, gx, gy, ignore_key=self.dragging_key)
+        outline = "#15803d" if allowed else "#b91c1c"
+        fill = "#bbf7d0" if allowed else "#fecaca"
+        self.canvas.create_rectangle(
+            x0,
+            y0,
+            x1,
+            y1,
+            fill=fill,
+            outline=outline,
+            width=2,
+            dash=(4, 3),
+            stipple="gray25",
+            tags=("preview",),
+        )
 
     def on_canvas_click(self, event: tk.Event) -> None:
         cell = self.canvas_to_grid(event.x, event.y)
@@ -402,6 +465,11 @@ class FurnitureLayoutApp:
         clicked = self.find_furniture_at(gx, gy)
         if clicked is not None:
             self.select_furniture(clicked)
+            placement = self.placements[clicked]
+            self.dragging_key = clicked
+            self.drag_origin = (placement.gx, placement.gy, placement.rotation)
+            self.drag_hover_cell = (gx, gy)
+            self.draw_furniture()
             return
         if self.selected_opening is not None:
             kind, index = self.selected_opening
@@ -425,6 +493,55 @@ class FurnitureLayoutApp:
         self.draw_furniture()
         self.set_result_text("Placement updated. Evaluate or generate new suggestions.")
 
+    def on_canvas_drag(self, event: tk.Event) -> None:
+        if self.dragging_key is None:
+            return
+        cell = self.canvas_to_grid(event.x, event.y)
+        self.drag_hover_cell = cell
+        self.draw_furniture()
+
+    def on_canvas_release(self, event: tk.Event) -> None:
+        if self.dragging_key is None:
+            return
+        key = self.dragging_key
+        cell = self.canvas_to_grid(event.x, event.y)
+        placement = self.placements[key]
+        if cell is not None:
+            gx, gy = cell
+            if self.can_place_furniture(key, gx, gy, ignore_key=key):
+                placement.gx = gx
+                placement.gy = gy
+                placement.placed = True
+                self.set_result_text("Placement updated. Evaluate or generate new suggestions.")
+            elif self.drag_origin is not None:
+                placement.gx, placement.gy, placement.rotation = self.drag_origin
+                placement.placed = placement.gx is not None and placement.gy is not None
+                messagebox.showwarning("Placement error", "That cell is blocked or out of bounds.")
+        elif self.drag_origin is not None:
+            placement.gx, placement.gy, placement.rotation = self.drag_origin
+            placement.placed = placement.gx is not None and placement.gy is not None
+        self.dragging_key = None
+        self.drag_origin = None
+        self.drag_hover_cell = None
+        self.draw_palette()
+        self.draw_furniture()
+
+    def on_canvas_hover(self, event: tk.Event) -> None:
+        cell = self.canvas_to_grid(event.x, event.y)
+        hover_key = None
+        if cell is not None:
+            hover_key = self.find_furniture_at(*cell)
+        if hover_key != self.hover_key:
+            self.hover_key = hover_key
+            self.draw_furniture()
+
+    def on_canvas_leave(self, event: tk.Event) -> None:
+        del event
+        changed = self.hover_key is not None
+        self.hover_key = None
+        if changed:
+            self.draw_furniture()
+
     def select_furniture(self, key: str) -> None:
         self.selected_key = key
         self.selected_opening = None
@@ -442,6 +559,9 @@ class FurnitureLayoutApp:
     def clear_selection(self) -> None:
         self.selected_key = None
         self.selected_opening = None
+        self.dragging_key = None
+        self.drag_origin = None
+        self.drag_hover_cell = None
         self.rotate_button.config(state="disabled")
         self.draw_furniture()
         self.draw_grid()

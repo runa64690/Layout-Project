@@ -19,6 +19,9 @@ from design_models import (
 
 DEFAULT_RULE_WEIGHTS = {
     "clearance_violation": 2.0,
+    "door_front_clearance_penalty": 3.0,
+    "door_front_fall_penalty": 2.5,
+    "window_scatter_penalty": 2.0,
     "circulation_penalty": 1.5,
     "pairwise_distance_penalty": 2.0,
     "conversation_penalty": 2.0,
@@ -82,6 +85,22 @@ def build_window_scatter_rect(room: Room, opening: WallOpening, depth: int = 2) 
     if opening.wall == WallSide.BOTTOM:
         return (opening.offset, 0, opening.offset + opening.length, min(room.grid_h, depth))
     return (opening.offset, max(0, room.grid_h - depth), opening.offset + opening.length, room.grid_h)
+
+
+def build_door_front_rect(room: Room, opening: WallOpening, width: int = 4, depth: int = 2) -> tuple[int, int, int, int] | None:
+    if not opening.placed:
+        return None
+    room.validate_opening(opening)
+    center = opening.offset + (opening.length / 2.0)
+    start = max(0, min(int(math.floor(center - width / 2.0)), (room.grid_h if opening.wall in {WallSide.LEFT, WallSide.RIGHT} else room.grid_w) - width))
+    end = start + width
+    if opening.wall == WallSide.LEFT:
+        return (0, start, min(room.grid_w, depth), end)
+    if opening.wall == WallSide.RIGHT:
+        return (max(0, room.grid_w - depth), start, room.grid_w, end)
+    if opening.wall == WallSide.BOTTOM:
+        return (start, 0, end, min(room.grid_h, depth))
+    return (start, max(0, room.grid_h - depth), end, room.grid_h)
 
 
 def build_bed_head_zone_rect(bed: Furniture) -> tuple[int, int, int, int]:
@@ -193,6 +212,59 @@ def score_clearance_violation(room: Room, items: list[Furniture]) -> tuple[float
             if overlap_cells > 0:
                 score += overlap_cells
                 violations.append(f"{item.name} clearance overlaps occupied cells ({overlap_cells})")
+    return score, violations
+
+
+def score_door_front_clearance_penalty(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
+    score = 0.0
+    violations: list[str] = []
+    for door in room.doors:
+        front_rect = build_door_front_rect(room, door)
+        if front_rect is None:
+            continue
+        for item in items:
+            overlap_cells = rect_intersection_area_cells(front_rect, rect_of(item))
+            if overlap_cells <= 0:
+                continue
+            score += overlap_cells
+            violations.append(f"{item.name} overlaps the door-front safety area ({overlap_cells})")
+    return score, violations
+
+
+def score_door_front_fall_penalty(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
+    score = 0.0
+    violations: list[str] = []
+    for door in room.doors:
+        front_rect = build_door_front_rect(room, door)
+        if front_rect is None:
+            continue
+        for item in items:
+            fall_rect = build_fall_zone_rect(item)
+            if fall_rect is None:
+                continue
+            overlap_cells = rect_intersection_area_cells(front_rect, fall_rect)
+            if overlap_cells <= 0:
+                continue
+            score += overlap_cells
+            violations.append(f"{item.name} fall zone overlaps the door-front safety area ({overlap_cells})")
+    return score, violations
+
+
+def score_window_scatter_penalty(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
+    score = 0.0
+    violations: list[str] = []
+    for window in room.windows:
+        scatter_rect = build_window_scatter_rect(room, window)
+        if scatter_rect is None:
+            continue
+        for item in items:
+            if item.furniture_type not in {FurnitureType.BED, FurnitureType.SEAT}:
+                continue
+            overlap_cells = rect_intersection_area_cells(scatter_rect, rect_of(item))
+            if overlap_cells <= 0:
+                continue
+            score += overlap_cells
+            violations.append(f"{item.name} overlaps the window glass scatter area ({overlap_cells})")
     return score, violations
 
 
@@ -360,6 +432,9 @@ def evaluate_layout_cost(
 ) -> LayoutScore:
     rule_funcs: dict[str, Callable[[Room, list[Furniture]], tuple[float, list[str]]]] = {
         "clearance_violation": score_clearance_violation,
+        "door_front_clearance_penalty": score_door_front_clearance_penalty,
+        "door_front_fall_penalty": score_door_front_fall_penalty,
+        "window_scatter_penalty": score_window_scatter_penalty,
         "circulation_penalty": score_circulation_penalty,
         "pairwise_distance_penalty": score_pairwise_distance_penalty,
         "conversation_penalty": score_conversation_penalty,

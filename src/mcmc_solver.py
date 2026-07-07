@@ -12,7 +12,7 @@ from design_models import (
     clone_placements,
     get_rotated_size,
 )
-from layout_cost import LayoutScore, evaluate_layout_from_placements
+from layout_cost import LayoutScore, build_door_front_rect, evaluate_layout_from_placements
 
 
 @dataclass
@@ -129,6 +129,17 @@ class MCMCSolver:
             return False
         for anchor_x, anchor_y in room.door_anchor_cells():
             if gx <= anchor_x < gx + gw and gy <= anchor_y < gy + gd:
+                return False
+        for door in room.doors:
+            front_rect = build_door_front_rect(room, door)
+            if front_rect is None:
+                continue
+            if not (
+                gx + gw <= front_rect[0]
+                or front_rect[2] <= gx
+                or gy + gd <= front_rect[1]
+                or front_rect[3] <= gy
+            ):
                 return False
         for other_key, other in placements.items():
             if other_key == key or not other.placed or other.gx is None or other.gy is None:
