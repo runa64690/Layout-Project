@@ -11,6 +11,8 @@ from design_models import (
     FurnitureType,
     PlacedFurniture,
     Room,
+    WallOpening,
+    WallSide,
     build_items_from_placements,
     validate_layout,
 )
@@ -67,6 +69,19 @@ def build_fall_zone_rect(item: Furniture) -> tuple[int, int, int, int] | None:
     if item.fall_dir == Direction.WEST:
         return (gx - h, gy, gx, gy + gd)
     return None
+
+
+def build_window_scatter_rect(room: Room, opening: WallOpening, depth: int = 2) -> tuple[int, int, int, int] | None:
+    if not opening.placed:
+        return None
+    room.validate_opening(opening)
+    if opening.wall == WallSide.LEFT:
+        return (0, opening.offset, min(room.grid_w, depth), opening.offset + opening.length)
+    if opening.wall == WallSide.RIGHT:
+        return (max(0, room.grid_w - depth), opening.offset, room.grid_w, opening.offset + opening.length)
+    if opening.wall == WallSide.BOTTOM:
+        return (opening.offset, 0, opening.offset + opening.length, min(room.grid_h, depth))
+    return (opening.offset, max(0, room.grid_h - depth), opening.offset + opening.length, room.grid_h)
 
 
 def build_bed_head_zone_rect(bed: Furniture) -> tuple[int, int, int, int]:

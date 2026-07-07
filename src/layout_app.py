@@ -19,6 +19,7 @@ from design_models import (
 )
 from layout_cost import (
     build_fall_zone_rect,
+    build_window_scatter_rect,
     evaluate_layout_cost,
     total_fall_hazard_overlap_cells,
 )
@@ -54,6 +55,8 @@ class FurnitureLayoutApp:
         self.selected_opening: tuple[str, int] | None = None
         self.candidates: list[LayoutSolution] = []
         self.solver = MCMCSolver()
+        self.show_fall_zones = tk.BooleanVar(value=True)
+        self.show_window_zones = tk.BooleanVar(value=True)
         self.furniture_colors = {
             "shelf": "#c97b63",
             "bed": "#7aa6c2",
@@ -102,12 +105,28 @@ class FurnitureLayoutApp:
         )
         self.generate_button.grid(row=2, column=0, sticky="ew", pady=(8, 12))
 
-        tk.Label(self.side_frame, text="Suggestions", anchor="w").grid(row=3, column=0, sticky="ew")
+        self.fall_zone_toggle = tk.Checkbutton(
+            self.side_frame,
+            text="Show collapse zones",
+            variable=self.show_fall_zones,
+            command=self.draw_furniture,
+        )
+        self.fall_zone_toggle.grid(row=3, column=0, sticky="w")
+
+        self.window_zone_toggle = tk.Checkbutton(
+            self.side_frame,
+            text="Show glass scatter zones",
+            variable=self.show_window_zones,
+            command=self.draw_furniture,
+        )
+        self.window_zone_toggle.grid(row=4, column=0, sticky="w", pady=(2, 12))
+
+        tk.Label(self.side_frame, text="Suggestions", anchor="w").grid(row=5, column=0, sticky="ew")
 
         self.candidate_frame = tk.Frame(self.side_frame, bd=1, relief="solid", padx=6, pady=6)
-        self.candidate_frame.grid(row=4, column=0, sticky="ew")
+        self.candidate_frame.grid(row=6, column=0, sticky="ew")
 
-        tk.Label(self.side_frame, text="Score", anchor="w").grid(row=5, column=0, sticky="ew", pady=(12, 0))
+        tk.Label(self.side_frame, text="Score", anchor="w").grid(row=7, column=0, sticky="ew", pady=(12, 0))
         self.result_label = tk.Text(
             self.side_frame,
             width=38,
@@ -119,8 +138,8 @@ class FurnitureLayoutApp:
             wrap="word",
             borderwidth=1,
         )
-        self.result_label.grid(row=6, column=0, sticky="nsew")
-        self.side_frame.rowconfigure(6, weight=1)
+        self.result_label.grid(row=8, column=0, sticky="nsew")
+        self.side_frame.rowconfigure(8, weight=1)
 
     def set_result_text(self, text: str) -> None:
         self.result_label.config(state="normal")
@@ -193,6 +212,10 @@ class FurnitureLayoutApp:
     def draw_furniture(self) -> None:
         self.canvas.delete("furniture")
         self.canvas.delete("fall_zone")
+        self.canvas.delete("window_zone")
+
+        if self.show_window_zones.get():
+            self.draw_window_zones()
 
         for key, placement in self.placements.items():
             if not placement.placed or placement.gx is None or placement.gy is None:
@@ -202,7 +225,7 @@ class FurnitureLayoutApp:
             x0, y0, x1, y1 = self.rect_to_canvas(item.gx, item.gy, item.gw, item.gd)
 
             fall_zone = build_fall_zone_rect(item)
-            if fall_zone is not None:
+            if self.show_fall_zones.get() and fall_zone is not None:
                 fx0, fy0, fx1, fy1 = self.rect_to_canvas(
                     fall_zone[0],
                     fall_zone[1],
@@ -257,6 +280,8 @@ class FurnitureLayoutApp:
 
         if self.canvas.find_withtag("fall_zone") and self.canvas.find_withtag("furniture"):
             self.canvas.tag_lower("fall_zone", "furniture")
+        if self.canvas.find_withtag("window_zone") and self.canvas.find_withtag("furniture"):
+            self.canvas.tag_lower("window_zone", "furniture")
 
     def _draw_openings(self, kind: str, openings: list[WallOpening], label: str) -> None:
         for index, opening in enumerate(openings):
@@ -267,6 +292,29 @@ class FurnitureLayoutApp:
             color = self.opening_colors[kind]
             self.canvas.create_line(x0, y0, x1, y1, fill=color, width=width, tags=("grid", f"opening:{kind}:{index}"))
             self.canvas.create_text((x0 + x1) / 2, (y0 + y1) / 2 - 10, text=label, fill=color, tags="grid")
+
+    def draw_window_zones(self) -> None:
+        for window in self.room.windows:
+            scatter_zone = build_window_scatter_rect(self.room, window)
+            if scatter_zone is None:
+                continue
+            x0, y0, x1, y1 = self.rect_to_canvas(
+                scatter_zone[0],
+                scatter_zone[1],
+                scatter_zone[2] - scatter_zone[0],
+                scatter_zone[3] - scatter_zone[1],
+            )
+            self.canvas.create_rectangle(
+                x0,
+                y0,
+                x1,
+                y1,
+                fill="#dbeafe",
+                outline="#2563eb",
+                width=2,
+                dash=(4, 3),
+                tags=("window_zone",),
+            )
 
     def _add_opening_button(self, kind: str, index: int, opening: WallOpening) -> None:
         state = "placed" if opening.placed else "unplaced"
