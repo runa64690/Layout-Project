@@ -1,3 +1,10 @@
 outputs/
 __pycache__/
 .venv/
+
+# ProcTHOR local work
+procthor_work/outputs/
+procthor_work/cache/
+procthor_work/*.json
+procthor_work/*.jsonl
+procthor_work/*.jsonl.gz
