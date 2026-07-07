@@ -182,7 +182,12 @@ def score_clearance_violation(room: Room, items: list[Furniture]) -> tuple[float
 
 
 def _exit_anchor_cells(room: Room) -> list[tuple[int, int]]:
+    if room.doors:
+        return room.door_anchor_cells()
+
     anchors: set[tuple[int, int]] = set()
+    if None in (room.exit_ax, room.exit_ay, room.exit_bx, room.exit_by):
+        return []
     y0 = math.floor(min(room.exit_ay, room.exit_by))
     y1 = math.ceil(max(room.exit_ay, room.exit_by))
     if room.exit_ax == 0 and room.exit_bx == 0:
@@ -191,6 +196,16 @@ def _exit_anchor_cells(room: Room) -> list[tuple[int, int]]:
     elif room.exit_ax == room.grid_w and room.exit_bx == room.grid_w:
         for y in range(y0, y1):
             anchors.add((room.grid_w - 1, y))
+    elif room.exit_ay == 0 and room.exit_by == 0:
+        x0 = math.floor(min(room.exit_ax, room.exit_bx))
+        x1 = math.ceil(max(room.exit_ax, room.exit_bx))
+        for x in range(x0, x1):
+            anchors.add((x, 0))
+    elif room.exit_ay == room.grid_h and room.exit_by == room.grid_h:
+        x0 = math.floor(min(room.exit_ax, room.exit_bx))
+        x1 = math.ceil(max(room.exit_ax, room.exit_bx))
+        for x in range(x0, x1):
+            anchors.add((x, room.grid_h - 1))
     return [(x, y) for x, y in anchors if 0 <= x < room.grid_w and 0 <= y < room.grid_h]
 
 

@@ -9,6 +9,8 @@ from design_models import (
     Furniture,
     PlacedFurniture,
     Room,
+    WallOpening,
+    WallSide,
     build_furniture_from_placement,
     build_items_from_placements,
     clone_placements,
@@ -39,11 +41,17 @@ class FurnitureLayoutApp:
         self.room = room
         self.root = tk.Tk()
         self.root.title("Furniture Layout MCMC")
+        if not self.room.doors:
+            self.room.doors.append(WallOpening(key="door_1", label="Door", length=2))
+        if not self.room.windows:
+            self.room.windows.append(WallOpening(key="window_1", label="Window", wall=WallSide.TOP, length=2))
+        self.room.sync_legacy_exit_fields()
         self.placements = {
             key: PlacedFurniture(key=preset.key, label=preset.label)
             for key, preset in FURNITURE_PRESETS.items()
         }
         self.selected_key: str | None = None
+        self.selected_opening: tuple[str, int] | None = None
         self.candidates: list[LayoutSolution] = []
         self.solver = MCMCSolver()
         self.furniture_colors = {
@@ -53,12 +61,13 @@ class FurnitureLayoutApp:
             "tv_unit": "#6c7a89",
             "chair": "#8c6bb1",
         }
+        self.opening_colors = {"door": "#cc2936", "window": "#1d4ed8"}
 
         self.build_widgets()
         self.draw_grid()
         self.draw_palette()
         self.draw_furniture()
-        self.set_result_text("Place furniture manually, then evaluate or generate MCMC suggestions.")
+        self.set_result_text("Select furniture or an opening from the left, then click the room to place it.")
 
     def build_widgets(self) -> None:
         self.root.columnconfigure(1, weight=1)
@@ -133,11 +142,8 @@ class FurnitureLayoutApp:
         for row in range(self.room.grid_h + 1):
             y = y0 + row * self.CELL_PX
             self.canvas.create_line(x0, y, x0 + width, y, fill="#cccccc", tags="grid")
-
-        exit_y0 = y0 + (self.room.grid_h - self.room.exit_by) * self.CELL_PX
-        exit_y1 = y0 + (self.room.grid_h - self.room.exit_ay) * self.CELL_PX
-        self.canvas.create_line(x0, exit_y0, x0, exit_y1, fill="red", width=4, tags="grid")
-        self.canvas.create_text(x0 + 24, exit_y0 - 10, text="EXIT", fill="red", tags="grid")
+        self._draw_openings("door", self.room.doors, "DOOR")
+        self._draw_openings("window", self.room.windows, "WINDOW")
 
     def draw_palette(self) -> None:
         for child in self.palette_frame.winfo_children():
@@ -153,6 +159,12 @@ class FurnitureLayoutApp:
                 command=lambda value=key: self.select_furniture(value),
             )
             button.pack(fill="x", pady=4)
+
+        tk.Label(self.palette_frame, text="Openings").pack(anchor="w", pady=(12, 8))
+        for index, door in enumerate(self.room.doors):
+            self._add_opening_button("door", index, door)
+        for index, window in enumerate(self.room.windows):
+            self._add_opening_button("window", index, window)
 
     def grid_to_canvas(self, gx: int, gy: int) -> tuple[int, int]:
         x = self.GRID_MARGIN + gx * self.CELL_PX
@@ -246,6 +258,36 @@ class FurnitureLayoutApp:
         if self.canvas.find_withtag("fall_zone") and self.canvas.find_withtag("furniture"):
             self.canvas.tag_lower("fall_zone", "furniture")
 
+    def _draw_openings(self, kind: str, openings: list[WallOpening], label: str) -> None:
+        for index, opening in enumerate(openings):
+            if not opening.placed:
+                continue
+            x0, y0, x1, y1 = self.opening_to_canvas(opening)
+            width = 6 if self.selected_opening == (kind, index) else 4
+            color = self.opening_colors[kind]
+            self.canvas.create_line(x0, y0, x1, y1, fill=color, width=width, tags=("grid", f"opening:{kind}:{index}"))
+            self.canvas.create_text((x0 + x1) / 2, (y0 + y1) / 2 - 10, text=label, fill=color, tags="grid")
+
+    def _add_opening_button(self, kind: str, index: int, opening: WallOpening) -> None:
+        state = "placed" if opening.placed else "unplaced"
+        button = tk.Button(
+            self.palette_frame,
+            text=f"{opening.label} ({state})",
+            anchor="w",
+            command=lambda value=(kind, index): self.select_opening(*value),
+        )
+        button.pack(fill="x", pady=4)
+
+    def opening_to_canvas(self, opening: WallOpening) -> tuple[int, int, int, int]:
+        ax, ay, bx, by = self.room.opening_segment(opening)
+        left = self.GRID_MARGIN
+        top = self.GRID_MARGIN
+        x0 = left + ax * self.CELL_PX
+        x1 = left + bx * self.CELL_PX
+        y0 = top + (self.room.grid_h - ay) * self.CELL_PX
+        y1 = top + (self.room.grid_h - by) * self.CELL_PX
+        return int(x0), int(y0), int(x1), int(y1)
+
     def create_bed_head_marker(
         self,
         x0: int,
@@ -291,6 +333,9 @@ class FurnitureLayoutApp:
         gw, gd = get_rotated_size(preset.gw, preset.gd, self.placements[key].rotation)
         if gx < 0 or gy < 0 or gx + gw > self.room.grid_w or gy + gd > self.room.grid_h:
             return False
+        for anchor_x, anchor_y in self.room.door_anchor_cells():
+            if gx <= anchor_x < gx + gw and gy <= anchor_y < gy + gd:
+                return False
         for other_key, other in self.placements.items():
             if other_key == key or not other.placed or other.gx is None or other.gy is None:
                 continue
@@ -310,6 +355,15 @@ class FurnitureLayoutApp:
         if clicked is not None:
             self.select_furniture(clicked)
             return
+        if self.selected_opening is not None:
+            kind, index = self.selected_opening
+            if not self.place_opening(kind, index, gx, gy):
+                messagebox.showwarning("Placement error", "Openings must fit on a wall and cannot overlap.")
+                return
+            self.draw_grid()
+            self.draw_palette()
+            self.set_result_text("Opening updated. Click another wall cell to move it, or place furniture.")
+            return
         if self.selected_key is None:
             return
         if not self.can_place_furniture(self.selected_key, gx, gy):
@@ -325,13 +379,24 @@ class FurnitureLayoutApp:
 
     def select_furniture(self, key: str) -> None:
         self.selected_key = key
+        self.selected_opening = None
         self.rotate_button.config(state="normal")
         self.draw_furniture()
+        self.draw_grid()
 
-    def clear_selection(self) -> None:
+    def select_opening(self, kind: str, index: int) -> None:
+        self.selected_opening = (kind, index)
         self.selected_key = None
         self.rotate_button.config(state="disabled")
         self.draw_furniture()
+        self.draw_grid()
+
+    def clear_selection(self) -> None:
+        self.selected_key = None
+        self.selected_opening = None
+        self.rotate_button.config(state="disabled")
+        self.draw_furniture()
+        self.draw_grid()
 
     def rotate_selected(self) -> None:
         if self.selected_key is None:
@@ -346,6 +411,56 @@ class FurnitureLayoutApp:
                 return
         self.draw_furniture()
         self.set_result_text("Rotation updated. Evaluate or generate new suggestions.")
+
+    def place_opening(self, kind: str, index: int, gx: int, gy: int) -> bool:
+        opening = self.room.doors[index] if kind == "door" else self.room.windows[index]
+        old_state = (opening.wall, opening.offset, opening.length, opening.placed)
+        wall = self.nearest_wall(gx, gy)
+        limit = self.room.grid_h if wall in {WallSide.LEFT, WallSide.RIGHT} else self.room.grid_w
+        offset_basis = gy if wall in {WallSide.LEFT, WallSide.RIGHT} else gx
+        opening.wall = wall
+        opening.offset = max(0, min(limit - opening.length, offset_basis))
+        opening.placed = True
+        if self.openings_overlap(kind, index) or (kind == "door" and self.is_door_blocked()):
+            opening.wall, opening.offset, opening.length, opening.placed = old_state
+            return False
+        self.room.sync_legacy_exit_fields()
+        return True
+
+    def nearest_wall(self, gx: int, gy: int) -> WallSide:
+        distances = {
+            WallSide.LEFT: gx,
+            WallSide.RIGHT: self.room.grid_w - 1 - gx,
+            WallSide.BOTTOM: gy,
+            WallSide.TOP: self.room.grid_h - 1 - gy,
+        }
+        return min(distances, key=distances.get)
+
+    def openings_overlap(self, kind: str, index: int) -> bool:
+        opening = self.room.doors[index] if kind == "door" else self.room.windows[index]
+        try:
+            self.room.validate_opening(opening)
+        except ValueError:
+            return True
+        candidates = [("door", i, value) for i, value in enumerate(self.room.doors)] + [
+            ("window", i, value) for i, value in enumerate(self.room.windows)
+        ]
+        for other_kind, other_index, other in candidates:
+            if (other_kind, other_index) == (kind, index) or not other.placed:
+                continue
+            if opening.wall != other.wall:
+                continue
+            opening_end = opening.offset + opening.length
+            other_end = other.offset + other.length
+            if max(opening.offset, other.offset) < min(opening_end, other_end):
+                return True
+        return False
+
+    def is_door_blocked(self) -> bool:
+        for anchor_x, anchor_y in self.room.door_anchor_cells():
+            if self.find_furniture_at(anchor_x, anchor_y) is not None:
+                return True
+        return False
 
     def evaluate_current_layout(self) -> None:
         missing = [placement.label for placement in self.placements.values() if not placement.placed]

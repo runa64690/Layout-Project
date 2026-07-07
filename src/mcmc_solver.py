@@ -127,6 +127,9 @@ class MCMCSolver:
         gw, gd = get_rotated_size(preset.gw, preset.gd, rotation)
         if gx < 0 or gy < 0 or gx + gw > room.grid_w or gy + gd > room.grid_h:
             return False
+        for anchor_x, anchor_y in room.door_anchor_cells():
+            if gx <= anchor_x < gx + gw and gy <= anchor_y < gy + gd:
+                return False
         for other_key, other in placements.items():
             if other_key == key or not other.placed or other.gx is None or other.gy is None:
                 continue
@@ -225,6 +228,10 @@ class MCMCSolver:
                     overlap_w = min(ax + aw, bx + bw) - max(ax, bx)
                     overlap_h = min(ay + ad, by + bd) - max(ay, by)
                     penalty += max(1, overlap_w * overlap_h) * 50.0
+        for door_x, door_y in room.door_anchor_cells():
+            for _, ax, ay, aw, ad in occupied:
+                if ax <= door_x < ax + aw and ay <= door_y < ay + ad:
+                    penalty += 150.0
         return penalty
 
     def _signature(self, placements: dict[str, PlacedFurniture]) -> tuple[tuple[str, int, int, int], ...]:
