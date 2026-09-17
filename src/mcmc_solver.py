@@ -12,7 +12,8 @@ from design_models import (
     clone_placements,
     get_rotated_size,
 )
-from layout_cost import LayoutScore, build_door_front_rect, evaluate_layout_from_placements
+from layout_cost import LayoutScore, evaluate_layout_from_placements
+from layout_geometry import build_door_front_rect
 
 
 @dataclass

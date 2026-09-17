@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "cell_size_m": 0.25,
+  "furniture": [
+    {
+      "key": "shelf",
+      "label": "Shelf",
+      "gw": 4,
+      "gd": 2,
+      "h_cell": 7,
+      "furniture_type": "STORAGE",
+      "fall_dir": "NORTH",
+      "pillow_side": null,
+      "clearance": {
+        "min_cells": 2,
+        "mode": "front"
+      },
+      "pairwise_rules": [],
+      "conversation_seat": false,
+      "ceiling_mounted": false,
+      "model_id": "shelf"
+    },
+    {
+      "key": "bed",
+      "label": "Bed",
+      "gw": 6,
+      "gd": 4,
+      "h_cell": 3,
+      "furniture_type": "BED",
+      "fall_dir": null,
+      "pillow_side": "WEST",
+      "clearance": {
+        "min_cells": 2,
+        "mode": "side"
+      },
+      "pairwise_rules": [],
+      "conversation_seat": false,
+      "ceiling_mounted": false,
+      "model_id": "bed"
+    },
+    {
+      "key": "table",
+      "label": "Table",
+      "gw": 3,
+      "gd": 2,
+      "h_cell": 3,
+      "furniture_type": "TABLE",
+      "fall_dir": null,
+      "pillow_side": null,
+      "clearance": {
+        "min_cells": 1,
+        "mode": "all"
+      },
+      "pairwise_rules": [],
+      "conversation_seat": false,
+      "ceiling_mounted": false,
+      "model_id": "table"
+    },
+    {
+      "key": "tv_unit",
+      "label": "TV Unit",
+      "gw": 3,
+      "gd": 2,
+      "h_cell": 2,
+      "furniture_type": "TV_STAND",
+      "fall_dir": "NORTH",
+      "pillow_side": null,
+      "clearance": {
+        "min_cells": 1,
+        "mode": "front"
+      },
+      "pairwise_rules": [
+        {
+          "other_key": "table",
+          "min_distance_cells": 1,
+          "max_distance_cells": 4
+        }
+      ],
+      "conversation_seat": false,
+      "ceiling_mounted": false,
+      "model_id": "tv_unit"
+    },
+    {
+      "key": "chair",
+      "label": "Chair",
+      "gw": 1,
+      "gd": 1,
+      "h_cell": 2,
+      "furniture_type": "SEAT",
+      "fall_dir": null,
+      "pillow_side": null,
+      "clearance": {
+        "min_cells": 1,
+        "mode": "front"
+      },
+      "pairwise_rules": [],
+      "conversation_seat": true,
+      "ceiling_mounted": false,
+      "model_id": "chair"
+    },
+    {
+      "key": "ceiling_light",
+      "label": "Ceiling Light",
+      "gw": 2,
+      "gd": 2,
+      "h_cell": 1,
+      "furniture_type": "CEILING_LIGHT",
+      "fall_dir": null,
+      "pillow_side": null,
+      "clearance": null,
+      "pairwise_rules": [],
+      "conversation_seat": false,
+      "ceiling_mounted": true,
+      "model_id": "ceiling_light"
+    }
+  ]
+}

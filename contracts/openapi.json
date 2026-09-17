@@ -1,0 +1,654 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Furniture Layout API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/catalog": {
+      "get": {
+        "summary": "Catalog",
+        "operationId": "catalog_api_v1_catalog_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evaluate": {
+      "post": {
+        "summary": "Evaluate",
+        "operationId": "evaluate_api_v1_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/optimization-jobs": {
+      "post": {
+        "summary": "Optimize",
+        "operationId": "optimize_api_v1_optimization_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptimizationDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/optimization-jobs/{job_id}": {
+      "get": {
+        "summary": "Job",
+        "operationId": "job_api_v1_optimization_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CandidateDTO": {
+        "properties": {
+          "placements": {
+            "items": {
+              "$ref": "#/components/schemas/PlacementDTO"
+            },
+            "type": "array",
+            "title": "Placements"
+          },
+          "cost": {
+            "type": "number",
+            "title": "Cost"
+          },
+          "score_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreTerm"
+            },
+            "type": "array",
+            "title": "Score Breakdown"
+          },
+          "violations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Violations"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "accepted_steps": {
+            "type": "integer",
+            "title": "Accepted Steps"
+          },
+          "source_sample_index": {
+            "type": "integer",
+            "title": "Source Sample Index"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "placements",
+          "cost",
+          "score_breakdown",
+          "violations",
+          "valid",
+          "accepted_steps",
+          "source_sample_index"
+        ],
+        "title": "CandidateDTO"
+      },
+      "EvaluationDTO": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "total": {
+            "type": "number",
+            "title": "Total"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreTerm"
+            },
+            "type": "array",
+            "title": "Breakdown"
+          },
+          "violations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Violations"
+          },
+          "fall_overlap_cells": {
+            "type": "integer",
+            "title": "Fall Overlap Cells"
+          },
+          "regions": {
+            "items": {
+              "$ref": "#/components/schemas/RegionDTO"
+            },
+            "type": "array",
+            "title": "Regions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "revision",
+          "total",
+          "breakdown",
+          "violations",
+          "fall_overlap_cells",
+          "regions"
+        ],
+        "title": "EvaluationDTO"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "JobDTO": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateDTO"
+            },
+            "type": "array",
+            "title": "Candidates"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "revision",
+          "status"
+        ],
+        "title": "JobDTO"
+      },
+      "LayoutDTO": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "revision": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "default": 0
+          },
+          "room": {
+            "$ref": "#/components/schemas/RoomDTO"
+          },
+          "placements": {
+            "items": {
+              "$ref": "#/components/schemas/PlacementDTO"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Placements"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "room",
+          "placements"
+        ],
+        "title": "LayoutDTO"
+      },
+      "OpeningDTO": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Label",
+            "default": "Opening"
+          },
+          "wall": {
+            "type": "string",
+            "enum": [
+              "LEFT",
+              "RIGHT",
+              "TOP",
+              "BOTTOM"
+            ],
+            "title": "Wall"
+          },
+          "offset": {
+            "type": "integer",
+            "maximum": 64.0,
+            "minimum": 0.0,
+            "title": "Offset"
+          },
+          "length": {
+            "type": "integer",
+            "maximum": 64.0,
+            "minimum": 1.0,
+            "title": "Length"
+          },
+          "placed": {
+            "type": "boolean",
+            "title": "Placed",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "wall",
+          "offset",
+          "length"
+        ],
+        "title": "OpeningDTO"
+      },
+      "OptimizationDTO": {
+        "properties": {
+          "layout": {
+            "$ref": "#/components/schemas/LayoutDTO"
+          },
+          "fixed_keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "title": "Fixed Keys"
+          },
+          "candidate_count": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Candidate Count",
+            "default": 3
+          },
+          "sample_count": {
+            "type": "integer",
+            "maximum": 5000.0,
+            "minimum": 2.0,
+            "title": "Sample Count",
+            "default": 900
+          },
+          "burn_in": {
+            "type": "integer",
+            "maximum": 4999.0,
+            "minimum": 0.0,
+            "title": "Burn In",
+            "default": 250
+          },
+          "sample_stride": {
+            "type": "integer",
+            "maximum": 5000.0,
+            "minimum": 1.0,
+            "title": "Sample Stride",
+            "default": 15
+          },
+          "rng_seed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rng Seed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "layout"
+        ],
+        "title": "OptimizationDTO"
+      },
+      "PlacementDTO": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Key"
+          },
+          "gx": {
+            "type": "integer",
+            "maximum": 64.0,
+            "minimum": -64.0,
+            "title": "Gx",
+            "default": 0
+          },
+          "gy": {
+            "type": "integer",
+            "maximum": 64.0,
+            "minimum": -64.0,
+            "title": "Gy",
+            "default": 0
+          },
+          "rotation": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 0.0,
+            "title": "Rotation",
+            "default": 0
+          },
+          "placed": {
+            "type": "boolean",
+            "title": "Placed",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "title": "PlacementDTO"
+      },
+      "RegionDTO": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "x0": {
+            "type": "integer",
+            "title": "X0"
+          },
+          "y0": {
+            "type": "integer",
+            "title": "Y0"
+          },
+          "x1": {
+            "type": "integer",
+            "title": "X1"
+          },
+          "y1": {
+            "type": "integer",
+            "title": "Y1"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "key",
+          "x0",
+          "y0",
+          "x1",
+          "y1"
+        ],
+        "title": "RegionDTO"
+      },
+      "RoomDTO": {
+        "properties": {
+          "grid_w": {
+            "type": "integer",
+            "maximum": 64.0,
+            "minimum": 4.0,
+            "title": "Grid W"
+          },
+          "grid_h": {
+            "type": "integer",
+            "maximum": 64.0,
+            "minimum": 4.0,
+            "title": "Grid H"
+          },
+          "ceiling_height_m": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 2.0,
+            "title": "Ceiling Height M",
+            "default": 2.5
+          },
+          "doors": {
+            "items": {
+              "$ref": "#/components/schemas/OpeningDTO"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "title": "Doors"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/OpeningDTO"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "title": "Windows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "grid_w",
+          "grid_h"
+        ],
+        "title": "RoomDTO"
+      },
+      "ScoreTerm": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "title": "ScoreTerm"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

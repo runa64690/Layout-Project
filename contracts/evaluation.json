@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "revision": 1,
+  "total": 13.139940386025561,
+  "breakdown": [
+    {
+      "name": "clearance_violation",
+      "value": 12.0
+    },
+    {
+      "name": "circulation_penalty",
+      "value": 0.0
+    },
+    {
+      "name": "pairwise_distance_penalty",
+      "value": 0.0
+    },
+    {
+      "name": "conversation_penalty",
+      "value": 0.0
+    },
+    {
+      "name": "visual_balance_penalty",
+      "value": 0.13994038602556064
+    },
+    {
+      "name": "alignment_penalty",
+      "value": 1.0
+    }
+  ],
+  "violations": [
+    "Bed clearance overlaps occupied cells (4)",
+    "Table clearance overlaps occupied cells (2)",
+    "Bed is not anchored near a wall"
+  ],
+  "fall_overlap_cells": 0,
+  "regions": [
+    {
+      "kind": "fall",
+      "key": "shelf",
+      "x0": 8,
+      "y0": 11,
+      "x1": 12,
+      "y1": 18
+    },
+    {
+      "kind": "bed_head",
+      "key": "bed",
+      "x0": 2,
+      "y0": 5,
+      "x1": 4,
+      "y1": 9
+    },
+    {
+      "kind": "fall",
+      "key": "tv_unit",
+      "x0": 8,
+      "y0": 3,
+      "x1": 11,
+      "y1": 5
+    },
+    {
+      "kind": "door_front",
+      "key": "door_1",
+      "x0": 0,
+      "y0": 4,
+      "x1": 2,
+      "y1": 8
+    },
+    {
+      "kind": "window_scatter",
+      "key": "window_1",
+      "x0": 5,
+      "y0": 10,
+      "x1": 7,
+      "y1": 12
+    }
+  ]
+}

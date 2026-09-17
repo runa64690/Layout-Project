@@ -1,0 +1,6 @@
+<linker>
+  <!-- JsonUtility reads public DTO fields; preserve them in IL2CPP/Web builds. -->
+  <assembly fullname="Assembly-CSharp">
+    <type fullname="FurnitureLayout.*" preserve="all" />
+  </assembly>
+</linker>

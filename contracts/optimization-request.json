@@ -1,0 +1,83 @@
+{
+  "layout": {
+    "schema_version": 1,
+    "revision": 1,
+    "room": {
+      "grid_w": 12,
+      "grid_h": 12,
+      "ceiling_height_m": 2.5,
+      "doors": [
+        {
+          "key": "door_1",
+          "label": "Door",
+          "wall": "LEFT",
+          "offset": 5,
+          "length": 2,
+          "placed": true
+        }
+      ],
+      "windows": [
+        {
+          "key": "window_1",
+          "label": "Window",
+          "wall": "TOP",
+          "offset": 5,
+          "length": 2,
+          "placed": true
+        }
+      ]
+    },
+    "placements": [
+      {
+        "key": "shelf",
+        "gx": 8,
+        "gy": 9,
+        "rotation": 0,
+        "placed": true
+      },
+      {
+        "key": "bed",
+        "gx": 4,
+        "gy": 5,
+        "rotation": 0,
+        "placed": true
+      },
+      {
+        "key": "table",
+        "gx": 5,
+        "gy": 1,
+        "rotation": 0,
+        "placed": true
+      },
+      {
+        "key": "tv_unit",
+        "gx": 8,
+        "gy": 1,
+        "rotation": 0,
+        "placed": true
+      },
+      {
+        "key": "chair",
+        "gx": 3,
+        "gy": 1,
+        "rotation": 0,
+        "placed": true
+      },
+      {
+        "key": "ceiling_light",
+        "gx": 5,
+        "gy": 5,
+        "rotation": 0,
+        "placed": true
+      }
+    ]
+  },
+  "fixed_keys": [
+    "bed"
+  ],
+  "candidate_count": 3,
+  "sample_count": 900,
+  "burn_in": 250,
+  "sample_stride": 15,
+  "rng_seed": 42
+}
