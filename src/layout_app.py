@@ -13,19 +13,16 @@ from design_models import (
     WallOpening,
     WallSide,
     build_furniture_from_placement,
-    build_items_from_placements,
     clone_placements,
     get_rotated_size,
     rotate_direction,
 )
 from layout_cost import (
-    build_door_front_rect,
     build_fall_zone_rect,
-    build_window_scatter_rect,
-    evaluate_layout_cost,
-    total_fall_hazard_overlap_cells,
 )
-from mcmc_solver import LayoutSolution, MCMCSolver
+from layout_geometry import build_door_front_rect, build_window_scatter_rect
+from layout_service import evaluate_layout, generate_candidates
+from mcmc_solver import LayoutSolution
 
 
 class FurnitureLayoutApp:
@@ -63,7 +60,6 @@ class FurnitureLayoutApp:
         self.drag_origin: tuple[int | None, int | None, int] | None = None
         self.drag_hover_cell: tuple[int, int] | None = None
         self.candidates: list[LayoutSolution] = []
-        self.solver = MCMCSolver()
         self.show_hazard_zones = tk.BooleanVar(value=True)
         self.show_ceiling_furniture = tk.BooleanVar(value=True)
         self.furniture_colors = {
@@ -674,9 +670,9 @@ class FurnitureLayoutApp:
             return
 
         try:
-            items = build_items_from_placements(self.placements)
-            score = evaluate_layout_cost(self.room, items)
-            fall_overlap = total_fall_hazard_overlap_cells(items)
+            evaluation = evaluate_layout(self.room, self.placements)
+            score = evaluation.score
+            fall_overlap = evaluation.fall_overlap_cells
         except ValueError as exc:
             self.set_result_text(f"Layout error: {exc}")
             return
@@ -701,7 +697,7 @@ class FurnitureLayoutApp:
             fixed_keys = set()
         self.set_result_text("Running MCMC search...")
         self.root.update_idletasks()
-        self.candidates = self.solver.generate_layout_candidates(
+        self.candidates = generate_candidates(
             self.room,
             self.placements,
             fixed_keys=fixed_keys,

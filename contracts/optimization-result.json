@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "revision": 1,
+  "id": "example-job",
+  "status": "succeeded",
+  "error": null,
+  "candidates": [
+    {
+      "placements": [
+        {
+          "key": "shelf",
+          "gx": 1,
+          "gy": 7,
+          "rotation": 3,
+          "placed": true
+        },
+        {
+          "key": "bed",
+          "gx": 4,
+          "gy": 5,
+          "rotation": 0,
+          "placed": true
+        },
+        {
+          "key": "table",
+          "gx": 6,
+          "gy": 1,
+          "rotation": 0,
+          "placed": true
+        },
+        {
+          "key": "tv_unit",
+          "gx": 10,
+          "gy": 1,
+          "rotation": 1,
+          "placed": true
+        },
+        {
+          "key": "chair",
+          "gx": 5,
+          "gy": 11,
+          "rotation": 2,
+          "placed": true
+        },
+        {
+          "key": "ceiling_light",
+          "gx": 4,
+          "gy": 5,
+          "rotation": 2,
+          "placed": true
+        }
+      ],
+      "cost": 1.0502006853422305,
+      "score_breakdown": [
+        {
+          "name": "clearance_violation",
+          "value": 0.0
+        },
+        {
+          "name": "circulation_penalty",
+          "value": 0.0
+        },
+        {
+          "name": "pairwise_distance_penalty",
+          "value": 0.0
+        },
+        {
+          "name": "conversation_penalty",
+          "value": 0.0
+        },
+        {
+          "name": "visual_balance_penalty",
+          "value": 0.05020068534223064
+        },
+        {
+          "name": "alignment_penalty",
+          "value": 1.0
+        }
+      ],
+      "violations": [
+        "Bed is not anchored near a wall"
+      ],
+      "valid": true,
+      "accepted_steps": 89,
+      "source_sample_index": 250
+    },
+    {
+      "placements": [
+        {
+          "key": "shelf",
+          "gx": 6,
+          "gy": 1,
+          "rotation": 0,
+          "placed": true
+        },
+        {
+          "key": "bed",
+          "gx": 4,
+          "gy": 5,
+          "rotation": 0,
+          "placed": true
+        },
+        {
+          "key": "table",
+          "gx": 0,
+          "gy": 9,
+          "rotation": 2,
+          "placed": true
+        },
+        {
+          "key": "tv_unit",
+          "gx": 1,
+          "gy": 5,
+          "rotation": 0,
+          "placed": true
+        },
+        {
+          "key": "chair",
+          "gx": 10,
+          "gy": 1,
+          "rotation": 1,
+          "placed": true
+        },
+        {
+          "key": "ceiling_light",
+          "gx": 9,
+          "gy": 7,
+          "rotation": 0,
+          "placed": true
+        }
+      ],
+      "cost": 1.1033342907531138,
+      "score_breakdown": [
+        {
+          "name": "clearance_violation",
+          "value": 0.0
+        },
+        {
+          "name": "circulation_penalty",
+          "value": 0.0
+        },
+        {
+          "name": "pairwise_distance_penalty",
+          "value": 0.06155281280883029
+        },
+        {
+          "name": "conversation_penalty",
+          "value": 0.0
+        },
+        {
+          "name": "visual_balance_penalty",
+          "value": 0.04178147794428367
+        },
+        {
+          "name": "alignment_penalty",
+          "value": 1.0
+        }
+      ],
+      "violations": [
+        "TV Unit to Table distance 4.12 is outside [1, 4]",
+        "Bed is not anchored near a wall"
+      ],
+      "valid": true,
+      "accepted_steps": 185,
+      "source_sample_index": 565
+    },
+    {
+      "placements": [
+        {
+          "key": "shelf",
+          "gx": 10,
+          "gy": 4,
+          "rotation": 1,
+          "placed": true
+        },
+        {
+          "key": "bed",
+          "gx": 4,
+          "gy": 5,
+          "rotation": 0,
+          "placed": true
+        },
+        {
+          "key": "table",
+          "gx": 4,
+          "gy": 0,
+          "rotation": 1,
+          "placed": true
+        },
+        {
+          "key": "tv_unit",
+          "gx": 0,
+          "gy": 3,
+          "rotation": 2,
+          "placed": true
+        },
+        {
+          "key": "chair",
+          "gx": 1,
+          "gy": 9,
+          "rotation": 0,
+          "placed": true
+        },
+        {
+          "key": "ceiling_light",
+          "gx": 4,
+          "gy": 5,
+          "rotation": 3,
+          "placed": true
+        }
+      ],
+      "cost": 1.196161848355569,
+      "score_breakdown": [
+        {
+          "name": "clearance_violation",
+          "value": 0.0
+        },
+        {
+          "name": "circulation_penalty",
+          "value": 0.0
+        },
+        {
+          "name": "pairwise_distance_penalty",
+          "value": 0.15058131676065667
+        },
+        {
+          "name": "conversation_penalty",
+          "value": 0.0
+        },
+        {
+          "name": "visual_balance_penalty",
+          "value": 0.04558053159491237
+        },
+        {
+          "name": "alignment_penalty",
+          "value": 1.0
+        }
+      ],
+      "violations": [
+        "TV Unit to Table distance 4.30 is outside [1, 4]",
+        "Bed is not anchored near a wall"
+      ],
+      "valid": true,
+      "accepted_steps": 279,
+      "source_sample_index": 850
+    }
+  ]
+}

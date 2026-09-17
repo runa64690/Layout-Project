@@ -1,6 +1,17 @@
 outputs/
 __pycache__/
 .venv/
+.pytest_cache/
+unity/Library/
+unity/Temp/
+unity/Logs/
+unity/obj/
+unity/UserSettings/
+unity/Builds/
+unity/*.csproj
+unity/*.sln
+unity/*.slnx
+unity/.vs/
 
 # ProcTHOR local work
 procthor_work/outputs/

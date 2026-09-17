@@ -228,7 +228,6 @@ FURNITURE_PRESETS: dict[str, FurniturePreset] = {
         furniture_type=FurnitureType.BED,
         pillow_side=Direction.WEST,
         clearance=ClearanceRule(min_cells=2, mode="side"),
-        pairwise_rules=(PairwiseRule(other_key="table", min_distance_cells=0, max_distance_cells=3),),
     ),
     "table": FurniturePreset(
         key="table",
@@ -248,6 +247,7 @@ FURNITURE_PRESETS: dict[str, FurniturePreset] = {
         furniture_type=FurnitureType.TV_STAND,
         fall_dir=Direction.NORTH,
         clearance=ClearanceRule(min_cells=1, mode="front"),
+        pairwise_rules=(PairwiseRule(other_key="table", min_distance_cells=1, max_distance_cells=4),),
     ),
     "chair": FurniturePreset(
         key="chair",
@@ -257,7 +257,6 @@ FURNITURE_PRESETS: dict[str, FurniturePreset] = {
         h_cell=2,
         furniture_type=FurnitureType.SEAT,
         clearance=ClearanceRule(min_cells=1, mode="front"),
-        pairwise_rules=(PairwiseRule(other_key="table", min_distance_cells=1, max_distance_cells=4),),
         conversation_seat=True,
     ),
     "ceiling_light": FurniturePreset(
