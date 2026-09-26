@@ -26,8 +26,10 @@ dist-ssr
 
 # Python
 *.py[cod]
-.coverage
+.coveraSketchfabge
 htmlcov/
+.coverage
+.coverage.*
 
 # Unity generated files
 unity/Build/
