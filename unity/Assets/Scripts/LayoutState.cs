@@ -50,22 +50,23 @@ namespace FurnitureLayout
         public bool CanPlace(Placement p, Placement[] others, bool enforceDoorFront = true)
         {
             var d = Catalog.Find(p.key);
-            if (d == null || p.rotation < 0 || p.rotation > 3) return false;
-            var size = GridCoordinates.Size(d, p.rotation);
-            var rect = new RectInt(p.gx, p.gy, size.x, size.y);
-            if (rect.xMin < 0 || rect.yMin < 0 || rect.xMax > Data.room.grid_w || rect.yMax > Data.room.grid_h) return false;
+            if (d == null || !GridCoordinates.Finite(p.gx) || !GridCoordinates.Finite(p.gy) ||
+                !GridCoordinates.Finite(p.rotation) || p.rotation < 0 || p.rotation >= 4) return false;
+            var polygon = GridCoordinates.Corners(p,d);
+            float epsilon = GridCoordinates.Epsilon;
+            foreach (var point in polygon)
+                if (point.x < -epsilon || point.y < -epsilon || point.x > Data.room.grid_w+epsilon || point.y > Data.room.grid_h+epsilon) return false;
             foreach (var other in others)
             {
                 if (other.key == p.key || !other.placed) continue;
                 var od = Catalog.Find(other.key);
                 if (od == null) return false;
                 if (od.ceiling_mounted != d.ceiling_mounted) continue;
-                var os = GridCoordinates.Size(od, other.rotation);
-                if (rect.Overlaps(new RectInt(other.gx, other.gy, os.x, os.y))) return false;
+                if (GridCoordinates.Overlaps(polygon,GridCoordinates.Corners(other,od))) return false;
             }
             if (!d.ceiling_mounted)
                 foreach (var door in Data.room.doors)
-                    if (door.placed && rect.Overlaps(DoorRect(Data.room, door, enforceDoorFront))) return false;
+                    if (door.placed && GridCoordinates.Overlaps(polygon,GridCoordinates.Corners(DoorRect(Data.room, door, enforceDoorFront)))) return false;
             return true;
         }
         public static RectInt DoorRect(RoomData room, Opening door, bool front)

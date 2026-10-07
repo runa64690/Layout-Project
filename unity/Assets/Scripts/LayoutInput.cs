@@ -13,7 +13,7 @@ namespace FurnitureLayout
         public Action<string> SelectionChanged;
         public Action<string> Message;
         Placement drag;
-        Vector2Int grabOffset;
+        Vector2 grabOffset;
         bool pressed;
         Vector2 previous;
         float yaw = 0, pitch = 55, distance = 5;
@@ -68,57 +68,84 @@ namespace FurnitureLayout
             if (Input.GetMouseButtonUp(0)) End(Input.mousePosition,OverUI());
             previous=Input.mousePosition;
         }
-        Vector2Int Point(Vector2 screen)
+        bool Point(Vector2 screen, out Vector2 point)
         {
             var ray=Camera.ScreenPointToRay(screen);
-            if (new Plane(Vector3.up,Vector3.zero).Raycast(ray,out float enter)) return GridCoordinates.Cell(ray.GetPoint(enter),State.Catalog.cell_size_m);
-            return new Vector2Int(-100,-100);
+            if (new Plane(Vector3.up,Vector3.zero).Raycast(ray,out float enter))
+            {
+                point=GridCoordinates.Cell(ray.GetPoint(enter),State.Catalog.cell_size_m);
+                return true;
+            }
+            point=default;
+            return false;
         }
         void Begin(Vector2 screen)
         {
             pressed=true;
             if (SelectedOpening != null) return;
-            var cell=Point(screen); grabOffset=Vector2Int.zero;
+            if (!Point(screen,out var cell)) { CancelDrag(); return; }
+            grabOffset=Vector2.zero;
             if (Physics.Raycast(Camera.ScreenPointToRay(screen),out var hit) && hit.collider.TryGetComponent<FurnitureHit>(out var furniture))
             {
                 SelectedKey=furniture.Key; SelectionChanged?.Invoke(SelectedKey);
                 var p=State.Find(SelectedKey);
-                grabOffset=cell-new Vector2Int(p.gx,p.gy);
+                grabOffset=cell-new Vector2(p.gx,p.gy);
             }
             if (SelectedKey == null) return;
-            drag=State.Find(SelectedKey).Copy(); drag.placed=true; Move(screen);
+            drag=State.Find(SelectedKey).Copy(); drag.placed=true;
+            if (!Move(screen))
+            {
+                Message?.Invoke("Furniture does not fit inside the room at this angle.");
+                CancelDrag();
+            }
         }
-        void Move(Vector2 screen)
+        bool Move(Vector2 screen)
         {
-            if (drag == null) return;
-            var cell=Point(screen)-grabOffset; drag.gx=cell.x; drag.gy=cell.y;
+            if (drag == null || !Point(screen,out var point)) return false;
+            if (!GridCoordinates.ClampToRoom(drag,State.Catalog.Find(drag.key),State.Data.room,point-grabOffset)) return false;
             View.Preview(drag,State.CanPlace(drag,State.Data.placements));
+            return true;
         }
         void End(Vector2 screen, bool overUI)
         {
             if (!pressed) return;
             if (!overUI && SelectedOpening != null)
             {
-                var p=Point(screen); var room=State.Data.room;
-                int nearest=Mathf.Min(Mathf.Abs(p.x),Mathf.Abs(p.x-room.grid_w),Mathf.Abs(p.y),Mathf.Abs(p.y-room.grid_h));
+                if (!Point(screen,out var p)) { CancelDrag(); return; }
+                var room=State.Data.room;
+                float nearest=Mathf.Min(Mathf.Abs(p.x),Mathf.Abs(p.x-room.grid_w),Mathf.Abs(p.y),Mathf.Abs(p.y-room.grid_h));
                 string wall=nearest==Mathf.Abs(p.x) ? "LEFT" : nearest==Mathf.Abs(p.x-room.grid_w) ? "RIGHT" : nearest==Mathf.Abs(p.y) ? "BOTTOM" : "TOP";
-                if (!State.MoveOpening(SelectedOpening,wall,wall=="LEFT"||wall=="RIGHT" ? p.y : p.x)) Message?.Invoke("Opening does not fit, overlaps another opening, or blocks furniture.");
+                if (!State.MoveOpening(SelectedOpening,wall,Mathf.FloorToInt(wall=="LEFT"||wall=="RIGHT" ? p.y : p.x))) Message?.Invoke("Opening does not fit, overlaps another opening, or blocks furniture.");
             }
             else if (!overUI && drag != null)
             {
-                Move(screen);
-                if (!State.Place(drag)) Message?.Invoke("Cannot place here: outside room, overlap, or door clearance.");
+                if (Move(screen) && !State.Place(drag)) Message?.Invoke("Cannot place here: outside room, overlap, or door clearance.");
             }
             CancelDrag();
         }
         void CancelDrag() { pressed=false; drag=null; View.ClearPreview(); }
-        public void Rotate()
+        public void Rotate(float degrees = 1)
         {
-            if (SelectedKey == null) return;
-            var p=State.Find(SelectedKey).Copy(); p.rotation=(p.rotation+1)%4;
-            if (p.placed) { if (!State.Place(p)) Message?.Invoke("Rotation would overlap or leave the room."); }
+            if (SelectedKey != null) SetAngle(State.Find(SelectedKey).rotation*90+degrees);
+        }
+        public void SetAngle(float degrees)
+        {
+            if (SelectedKey == null || !GridCoordinates.Finite(degrees)) return;
+            CancelDrag();
+            var p=State.Find(SelectedKey).Copy();
+            var d=State.Catalog.Find(p.key);
+            var oldSize=GridCoordinates.Size(d,p.rotation);
+            p.rotation=Mathf.Repeat(degrees,360)/90;
+            var newSize=GridCoordinates.Size(d,p.rotation);
+            // Rotate around the furniture center, preserving its world position.
+            if (p.placed)
+            {
+                p.gx+=(oldSize.x-newSize.x)/2; p.gy+=(oldSize.y-newSize.y)/2;
+                if (!State.Place(p)) Message?.Invoke("Rotation would overlap or leave the room.");
+            }
             else { State.Find(SelectedKey).rotation=p.rotation; State.Touch(); }
         }
+        void OnDisable() { if (View != null) CancelDrag(); }
         void OnApplicationFocus(bool focused) { if (!focused && View != null) CancelDrag(); }
     }
 }

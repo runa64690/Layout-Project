@@ -705,6 +705,7 @@ class FurnitureLayoutApp:
             sample_count=900,
             burn_in=250,
             sample_stride=15,
+            continuous=False,  # The legacy 2D editor still uses cardinal rectangles.
         )
         self.render_candidates()
         if not self.candidates:

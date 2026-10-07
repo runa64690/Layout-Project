@@ -29,51 +29,141 @@
     }
   ],
   "violations": [
-    "Bed clearance overlaps occupied cells (4)",
-    "Table clearance overlaps occupied cells (2)",
+    "Bed clearance overlaps occupied area (4.00 cell units squared)",
+    "Table clearance overlaps occupied area (2.00 cell units squared)",
     "Bed is not anchored near a wall"
   ],
-  "fall_overlap_cells": 0,
+  "fall_overlap_cells": 0.0,
   "regions": [
     {
       "kind": "fall",
       "key": "shelf",
-      "x0": 8,
-      "y0": 11,
-      "x1": 12,
-      "y1": 18
+      "x0": 8.0,
+      "y0": 11.0,
+      "x1": 12.0,
+      "y1": 18.0,
+      "points": [
+        {
+          "x": 8.0,
+          "y": 11.0
+        },
+        {
+          "x": 12.0,
+          "y": 11.0
+        },
+        {
+          "x": 12.0,
+          "y": 18.0
+        },
+        {
+          "x": 8.0,
+          "y": 18.0
+        }
+      ]
     },
     {
       "kind": "bed_head",
       "key": "bed",
-      "x0": 2,
-      "y0": 5,
-      "x1": 4,
-      "y1": 9
+      "x0": 2.0,
+      "y0": 5.0,
+      "x1": 4.0,
+      "y1": 9.0,
+      "points": [
+        {
+          "x": 2.0,
+          "y": 5.0
+        },
+        {
+          "x": 4.0,
+          "y": 5.0
+        },
+        {
+          "x": 4.0,
+          "y": 9.0
+        },
+        {
+          "x": 2.0,
+          "y": 9.0
+        }
+      ]
     },
     {
       "kind": "fall",
       "key": "tv_unit",
-      "x0": 8,
-      "y0": 3,
-      "x1": 11,
-      "y1": 5
+      "x0": 8.0,
+      "y0": 3.0,
+      "x1": 11.0,
+      "y1": 5.0,
+      "points": [
+        {
+          "x": 8.0,
+          "y": 3.0
+        },
+        {
+          "x": 11.0,
+          "y": 3.0
+        },
+        {
+          "x": 11.0,
+          "y": 5.0
+        },
+        {
+          "x": 8.0,
+          "y": 5.0
+        }
+      ]
     },
     {
       "kind": "door_front",
       "key": "door_1",
-      "x0": 0,
-      "y0": 4,
-      "x1": 2,
-      "y1": 8
+      "x0": 0.0,
+      "y0": 4.0,
+      "x1": 2.0,
+      "y1": 8.0,
+      "points": [
+        {
+          "x": 0.0,
+          "y": 4.0
+        },
+        {
+          "x": 2.0,
+          "y": 4.0
+        },
+        {
+          "x": 2.0,
+          "y": 8.0
+        },
+        {
+          "x": 0.0,
+          "y": 8.0
+        }
+      ]
     },
     {
       "kind": "window_scatter",
       "key": "window_1",
-      "x0": 5,
-      "y0": 10,
-      "x1": 7,
-      "y1": 12
+      "x0": 5.0,
+      "y0": 10.0,
+      "x1": 7.0,
+      "y1": 12.0,
+      "points": [
+        {
+          "x": 5.0,
+          "y": 10.0
+        },
+        {
+          "x": 7.0,
+          "y": 10.0
+        },
+        {
+          "x": 7.0,
+          "y": 12.0
+        },
+        {
+          "x": 5.0,
+          "y": 12.0
+        }
+      ]
     }
   ]
 }

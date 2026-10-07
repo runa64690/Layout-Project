@@ -11,9 +11,11 @@ from design_models import (
     Room,
     clone_placements,
     get_rotated_size,
+    build_items_from_placements, build_furniture_from_placement, validate_layout,
 )
 from layout_cost import LayoutScore, evaluate_layout_from_placements
 from layout_geometry import build_door_front_rect
+from spatial_geometry import overlaps, rect_polygon, intersection_area
 
 
 @dataclass
@@ -27,7 +29,8 @@ class LayoutSolution:
 
 
 class MCMCSolver:
-    def __init__(self, beta: float = 1.2, invalid_penalty: float = 1000.0) -> None:
+    def __init__(self, beta: float = 1.2, invalid_penalty: float = 1000.0, *, continuous: bool = True) -> None:
+        self.continuous = continuous
         self.beta = beta
         self.invalid_penalty = invalid_penalty
 
@@ -45,14 +48,20 @@ class MCMCSolver:
     ) -> list[LayoutSolution]:
         rng = random.Random(rng_seed)
         fixed = set() if fixed_keys is None else set(fixed_keys)
+
+        #初期状態を作成,
         current = self._randomize_missing(room, clone_placements(placements), fixed, rng)
         current_solution = self._evaluate(room, current)
+
         accepted_steps = 0
         samples: list[LayoutSolution] = []
 
         for step in range(sample_count):
+            #近傍生成
             neighbor = self._propose_neighbor(room, current, fixed, rng)
             neighbor_solution = self._evaluate(room, neighbor)
+
+            #現在の配置と候補配置について、差を計算。コストが下がればいい配置。コストが下がれば必ず採用される。悪い配置も一定の確率で採用することで、局所最適解から抜け出せる
             delta = neighbor_solution.cost - current_solution.cost
 
             if delta <= 0 or rng.random() < math.exp(-self.beta * delta):
@@ -123,40 +132,18 @@ class MCMCSolver:
         gy: int,
         placements: dict[str, PlacedFurniture],
     ) -> bool:
-        preset = FURNITURE_PRESETS[key]
-        rotation = placements[key].rotation
-        gw, gd = get_rotated_size(preset.gw, preset.gd, rotation)
-        if gx < 0 or gy < 0 or gx + gw > room.grid_w or gy + gd > room.grid_h:
+        candidate = clone_placements(placements)
+        candidate[key].gx, candidate[key].gy, candidate[key].placed = gx, gy, True
+        try:
+            validate_layout(room, build_items_from_placements(candidate))
+        except ValueError:
             return False
-        if not preset.ceiling_mounted:
-            for anchor_x, anchor_y in room.door_anchor_cells():
-                if gx <= anchor_x < gx + gw and gy <= anchor_y < gy + gd:
-                    return False
+        item = build_furniture_from_placement(key, candidate[key])
+        if not item.ceiling_mounted:
             for door in room.doors:
-                front_rect = build_door_front_rect(room, door)
-                if front_rect is None:
-                    continue
-                if not (
-                    gx + gw <= front_rect[0]
-                    or front_rect[2] <= gx
-                    or gy + gd <= front_rect[1]
-                    or front_rect[3] <= gy
-                ):
+                rect = build_door_front_rect(room, door)
+                if rect and overlaps(item.footprint, rect_polygon(rect)):
                     return False
-        for other_key, other in placements.items():
-            if other_key == key or not other.placed or other.gx is None or other.gy is None:
-                continue
-            other_preset = FURNITURE_PRESETS[other_key]
-            if other_preset.ceiling_mounted != preset.ceiling_mounted:
-                continue
-            other_gw, other_gd = get_rotated_size(other_preset.gw, other_preset.gd, other.rotation)
-            if not (
-                gx + gw <= other.gx
-                or other.gx + other_gw <= gx
-                or gy + gd <= other.gy
-                or other.gy + other_gd <= gy
-            ):
-                return False
         return True
 
     def _propose_neighbor(
@@ -171,7 +158,10 @@ class MCMCSolver:
             return clone_placements(placements)
 
         proposal = clone_placements(placements)
+
+        #提案分布。ランダムに移動、回転、入れ替えのどれかを行う
         move_type = rng.choice(("translate", "rotate", "swap"))
+
         if move_type == "swap" and len(movable) >= 2:
             left_key, right_key = rng.sample(movable, 2)
             left = proposal[left_key]
@@ -184,11 +174,20 @@ class MCMCSolver:
         key = rng.choice(movable)
         placement = proposal[key]
         if move_type == "rotate":
-            placement.rotation = (placement.rotation + rng.choice((1, 3))) % 4
+            if not self.continuous:
+                placement.rotation = (placement.rotation + rng.choice((1, 3))) % 4
+                return proposal
+            preset = FURNITURE_PRESETS[key]
+            old_w, old_d = get_rotated_size(preset.gw, preset.gd, placement.rotation)
+            placement.rotation = (placement.rotation + rng.uniform(-1/3, 1/3)) % 4
+            new_w, new_d = get_rotated_size(preset.gw, preset.gd, placement.rotation)
+            if placement.gx is not None and placement.gy is not None:
+                placement.gx += (old_w - new_w) / 2
+                placement.gy += (old_d - new_d) / 2
             return proposal
 
-        dx = rng.randint(-2, 2)
-        dy = rng.randint(-2, 2)
+        dx = rng.uniform(-2, 2) if self.continuous else rng.randint(-2, 2)
+        dy = rng.uniform(-2, 2) if self.continuous else rng.randint(-2, 2)
         if placement.gx is None or placement.gy is None:
             placement.gx = 0
             placement.gy = 0
@@ -198,16 +197,21 @@ class MCMCSolver:
 
     def _evaluate(self, room: Room, placements: dict[str, PlacedFurniture]) -> LayoutSolution:
         try:
+
+            #目的関数
             score = evaluate_layout_from_placements(room, placements)
+
             return LayoutSolution(
                 placements=clone_placements(placements),
-                cost=score.total,
+                cost=score.total, #家具配置のコスト
                 score_breakdown=score.breakdown,
                 violations=score.violations,
                 accepted_steps=0,
                 source_sample_index=0,
             )
         except ValueError as exc:
+
+            #不正な家具には大きなペナルティ(大きなコスト)を与え、採用されずらくしている
             penalty = self.invalid_penalty + self._soft_geometry_penalty(room, placements)
             return LayoutSolution(
                 placements=clone_placements(placements),
@@ -220,7 +224,6 @@ class MCMCSolver:
 
     def _soft_geometry_penalty(self, room: Room, placements: dict[str, PlacedFurniture]) -> float:
         penalty = 0.0
-        occupied: list[tuple[str, int, int, int, int]] = []
         for key, placement in placements.items():
             if placement.gx is None or placement.gy is None:
                 penalty += 250.0
@@ -235,37 +238,28 @@ class MCMCSolver:
                 penalty += (placement.gx + gw - room.grid_w) * 25.0
             if placement.gy + gd > room.grid_h:
                 penalty += (placement.gy + gd - room.grid_h) * 25.0
-            occupied.append((key, placement.gx, placement.gy, gw, gd))
 
-        for index, (_, ax, ay, aw, ad) in enumerate(occupied):
-            a_key = occupied[index][0]
-            a_preset = FURNITURE_PRESETS[a_key]
-            for b_key, bx, by, bw, bd in occupied[index + 1 :]:
-                b_preset = FURNITURE_PRESETS[b_key]
-                if a_preset.ceiling_mounted != b_preset.ceiling_mounted:
-                    continue
-                if not (ax + aw <= bx or bx + bw <= ax or ay + ad <= by or by + bd <= ay):
-                    overlap_w = min(ax + aw, bx + bw) - max(ax, bx)
-                    overlap_h = min(ay + ad, by + bd) - max(ay, by)
-                    penalty += max(1, overlap_w * overlap_h) * 50.0
-        for door_x, door_y in room.door_anchor_cells():
-            for key, ax, ay, aw, ad in occupied:
-                if FURNITURE_PRESETS[key].ceiling_mounted:
-                    continue
-                if ax <= door_x < ax + aw and ay <= door_y < ay + ad:
-                    penalty += 150.0
+        items = [build_furniture_from_placement(key, p) for key, p in placements.items()
+                 if p.placed and p.gx is not None and p.gy is not None]
+        for index, item in enumerate(items):
+            for other in items[index + 1:]:
+                if item.ceiling_mounted == other.ceiling_mounted:
+                    penalty += intersection_area(item.footprint, other.footprint) * 50.0
+            if not item.ceiling_mounted:
+                for x, y in room.door_anchor_cells():
+                    penalty += intersection_area(item.footprint, rect_polygon((x, y, x+1, y+1))) * 150.0
         return penalty
 
-    def _signature(self, placements: dict[str, PlacedFurniture]) -> tuple[tuple[str, int, int, int], ...]:
-        signature: list[tuple[str, int, int, int]] = []
+    def _signature(self, placements: dict[str, PlacedFurniture]) -> tuple[tuple[str, float, float, float], ...]:
+        signature: list[tuple[str, float, float, float]] = []
         for key in sorted(placements):
             placement = placements[key]
-            signature.append((key, placement.gx or -1, placement.gy or -1, placement.rotation))
+            signature.append((key, placement.gx if placement.gx is not None else -1, placement.gy if placement.gy is not None else -1, placement.rotation))
         return tuple(signature)
 
     def _dedupe_by_signature(self, samples: list[LayoutSolution]) -> list[LayoutSolution]:
         deduped: list[LayoutSolution] = []
-        seen: set[tuple[tuple[str, int, int, int], ...]] = set()
+        seen: set[tuple[tuple[str, float, float, float], ...]] = set()
         for sample in samples:
             signature = self._signature(sample.placements)
             if signature in seen:

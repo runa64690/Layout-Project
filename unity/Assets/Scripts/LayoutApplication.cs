@@ -16,7 +16,8 @@ namespace FurnitureLayout
         LayoutRenderer view;
         LayoutInput input;
         Camera roomCamera;
-        Text status, selection;
+        Text status, selection, angleLabel;
+        Slider angleSlider;
         InputField address;
         RectTransform panel, content;
         CanvasScaler scaler;
@@ -102,7 +103,10 @@ namespace FurnitureLayout
                 string key=definition.key;
                 Button(definition.label,controls,()=>Select(key));
             }
-            Button("Rotate 90 degrees",controls,input.Rotate);
+            angleLabel=Label("Angle: 0.0 degrees",controls,16);
+            angleSlider=AngleSlider(controls);
+            Button("Rotate -1 degree",controls,()=> { input.Rotate(-1); RefreshAngle(); });
+            Button("Rotate +1 degree",controls,()=> { input.Rotate(1); RefreshAngle(); });
             Button("Remove selected",controls,()=> { if (input.SelectedKey != null) state.Remove(input.SelectedKey); });
             Button("Toggle fixed for search",controls,()=>
             {
@@ -114,8 +118,31 @@ namespace FurnitureLayout
             Button("Move door (click wall)",controls,()=>SelectOpening("door_1"));
             Button("Move window (click wall)",controls,()=>SelectOpening("window_1"));
             Button("Show / hide ceiling furniture",controls,()=> { view.ShowCeiling=!view.ShowCeiling; view.Redraw(); });
+            Button("Show / hide reference grid",controls,()=> { view.ShowGrid=!view.ShowGrid; view.Redraw(); });
             Button("Models / boxes",controls,()=> { view.UseModels=!view.UseModels; view.Redraw(); });
-            Label("Drag / tap: place\nRight drag: orbit | Wheel: zoom\nTwo fingers: orbit and pinch to zoom\nGreen wall: door | Blue wall: window",controls,15);
+            Label("Drag / tap: free placement\nAngle slider: rotate freely\nRight drag: orbit | Wheel: zoom\nTwo fingers: orbit and pinch to zoom\nGreen wall: door | Blue wall: window",controls,15);
+        }
+        Slider AngleSlider(Transform parent)
+        {
+            var root=Rect("Angle slider",parent);
+            root.gameObject.AddComponent<LayoutElement>().preferredHeight=36;
+            var background=root.gameObject.AddComponent<Image>(); background.color=new Color(.2f,.27f,.34f);
+            var slider=root.gameObject.AddComponent<Slider>(); slider.minValue=0; slider.maxValue=360; slider.wholeNumbers=false;
+            var area=Rect("Handle area",root); Stretch(area); area.offsetMin=new Vector2(12,0); area.offsetMax=new Vector2(-12,0);
+            var handle=Rect("Handle",area); handle.sizeDelta=new Vector2(22,0);
+            var graphic=handle.gameObject.AddComponent<Image>(); graphic.color=new Color(.3f,.8f,.85f);
+            slider.handleRect=handle; slider.targetGraphic=graphic;
+            slider.onValueChanged.AddListener(degrees=> { input.SetAngle(degrees); RefreshAngle(); });
+            return slider;
+        }
+        void RefreshAngle()
+        {
+            if (angleSlider==null || state==null) return;
+            var p=input.SelectedKey==null ? null : state.Find(input.SelectedKey);
+            angleSlider.interactable=p!=null;
+            float degrees=p==null ? 0 : p.rotation*90;
+            angleSlider.SetValueWithoutNotify(degrees);
+            angleLabel.text=p==null ? "Select furniture to rotate" : "Angle: "+degrees.ToString("F1")+" degrees";
         }
         IEnumerator Connect()
         {
@@ -128,11 +155,12 @@ namespace FurnitureLayout
             {
                 if (catalog.schema_version!=1 || catalog.furniture==null || catalog.furniture.Length==0 || Math.Abs(catalog.cell_size_m-.25f)>.00001f)
                 { SetStatus("Unsupported catalog version or grid size."); return; }
+                if (!catalog.continuous_placement) { SetStatus("Restart the updated Python API to enable free placement and rotation."); return; }
                 state=new LayoutState(catalog); view.Initialize(state); input.State=state; input.FrameRoom();
                 state.Changed+=OnEdited;
                 AddEditingControls(catalog); Select(catalog.furniture[0].key); SetReady(true);
                 address.interactable=false; PlayerPrefs.SetString("layout.api",url); PlayerPrefs.Save();
-                SetStatus("Select furniture, then click or drag on the grid.\nOr generate candidates for the empty room.");
+                SetStatus("Select furniture, then click or drag on the floor.\nOr generate candidates for the empty room.");
             },SetStatus);
             connectButton.interactable=state==null;
         }
@@ -140,15 +168,17 @@ namespace FurnitureLayout
         void Select(string key)
         {
             input.SelectedKey=key; input.SelectedOpening=null; view.SelectedKey=key; view.Redraw();
+            RefreshAngle();
             selection.text=state.Catalog.Find(key).label+(state.FixedKeys.Contains(key) ? " [fixed]" : " [movable]");
         }
         void SelectOpening(string key)
         {
             input.SelectedOpening=key; input.SelectedKey=null; view.SelectedKey=null; view.Redraw();
-            selection.text=key+": click a wall to move";
+            selection.text=key+": click a wall to move"; RefreshAngle();
         }
         void OnEdited()
         {
+            RefreshAngle();
             if (evaluationRevision>=0 && evaluationRevision!=state.Data.revision)
                 SetStatus("Layout changed. Previous evaluation is for an older layout; evaluate again.");
             if (jobLayout!=null && jobLayout.revision!=state.Data.revision)

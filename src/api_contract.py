@@ -56,9 +56,10 @@ class RoomDTO(DTO):
 
 class PlacementDTO(DTO):
     key: str = Field(min_length=1, max_length=64)
-    gx: int = Field(default=0, ge=-64, le=64, strict=True)
-    gy: int = Field(default=0, ge=-64, le=64, strict=True)
-    rotation: int = Field(default=0, ge=0, le=3, strict=True)
+    gx: float = Field(default=0, ge=-64, le=64, strict=True, allow_inf_nan=False)
+    gy: float = Field(default=0, ge=-64, le=64, strict=True, allow_inf_nan=False)
+    rotation: float = Field(default=0, ge=0, lt=4, strict=True, allow_inf_nan=False,
+                            description="Clockwise quarter turns, fractional values allowed (0.5 = 45 degrees)")
     placed: bool = False
 
 
@@ -112,13 +113,19 @@ class ScoreTerm(DTO):
     value: float
 
 
+class PointDTO(DTO):
+    x: float
+    y: float
+
+
 class RegionDTO(DTO):
     kind: str
     key: str
-    x0: int
-    y0: int
-    x1: int
-    y1: int
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+    points: list[PointDTO]
 
 
 class EvaluationDTO(DTO):
@@ -127,7 +134,7 @@ class EvaluationDTO(DTO):
     total: float
     breakdown: list[ScoreTerm]
     violations: list[str]
-    fall_overlap_cells: int
+    fall_overlap_cells: float
     regions: list[RegionDTO]
 
 
@@ -152,7 +159,7 @@ class JobDTO(DTO):
 
 def catalog_payload():
     return {
-        "schema_version": 1, "cell_size_m": CELL_SIZE_M,
+        "schema_version": 1, "cell_size_m": CELL_SIZE_M, "continuous_placement": True,
         "furniture": [asdict(p) | {"model_id": p.key} for p in FURNITURE_PRESETS.values()],
     }
 
@@ -167,7 +174,8 @@ def evaluate_payload(layout: LayoutDTO) -> EvaluationDTO:
         breakdown=[ScoreTerm(name=k, value=v) for k, v in result.score.breakdown.items()],
         violations=result.score.violations, fall_overlap_cells=result.fall_overlap_cells,
         regions=[RegionDTO(kind=r.kind, key=r.key, x0=r.rect[0], y0=r.rect[1],
-                           x1=r.rect[2], y1=r.rect[3]) for r in result.regions],
+                           x1=r.rect[2], y1=r.rect[3],
+                           points=[PointDTO(x=x, y=y) for x, y in r.points]) for r in result.regions],
     )
 
 

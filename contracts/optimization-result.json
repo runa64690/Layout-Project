@@ -9,48 +9,48 @@
       "placements": [
         {
           "key": "shelf",
-          "gx": 1,
-          "gy": 7,
-          "rotation": 3,
+          "gx": 1.094549955142405,
+          "gy": 4.4165707593107095,
+          "rotation": 3.001365677902178,
           "placed": true
         },
         {
           "key": "bed",
-          "gx": 4,
-          "gy": 5,
-          "rotation": 0,
+          "gx": 4.0,
+          "gy": 5.0,
+          "rotation": 0.0,
           "placed": true
         },
         {
           "key": "table",
-          "gx": 6,
-          "gy": 1,
-          "rotation": 0,
+          "gx": 3.3490663102843548,
+          "gy": 0.49351471821097315,
+          "rotation": 0.08578087200922507,
           "placed": true
         },
         {
           "key": "tv_unit",
-          "gx": 10,
-          "gy": 1,
-          "rotation": 1,
+          "gx": 7.381335204233537,
+          "gy": 0.11885336176114625,
+          "rotation": 0.1458304071770682,
           "placed": true
         },
         {
           "key": "chair",
-          "gx": 5,
-          "gy": 11,
-          "rotation": 2,
+          "gx": 10.158882570058587,
+          "gy": 10.362788448032939,
+          "rotation": 0.12504666050281266,
           "placed": true
         },
         {
           "key": "ceiling_light",
-          "gx": 4,
-          "gy": 5,
-          "rotation": 2,
+          "gx": 4.325094066010003,
+          "gy": 5.769752171056734,
+          "rotation": 2.921226197641766,
           "placed": true
         }
       ],
-      "cost": 1.0502006853422305,
+      "cost": 1.1824192324039164,
       "score_breakdown": [
         {
           "name": "clearance_violation",
@@ -62,7 +62,7 @@
         },
         {
           "name": "pairwise_distance_penalty",
-          "value": 0.0
+          "value": 0.05359665159731364
         },
         {
           "name": "conversation_penalty",
@@ -70,66 +70,68 @@
         },
         {
           "name": "visual_balance_penalty",
-          "value": 0.05020068534223064
+          "value": 0.03427262566419781
         },
         {
           "name": "alignment_penalty",
-          "value": 1.0
+          "value": 1.094549955142405
         }
       ],
       "violations": [
+        "TV Unit to Table distance 4.11 is outside [1, 4]",
+        "Shelf is not anchored near a wall",
         "Bed is not anchored near a wall"
       ],
       "valid": true,
-      "accepted_steps": 89,
-      "source_sample_index": 250
+      "accepted_steps": 247,
+      "source_sample_index": 730
     },
     {
       "placements": [
         {
           "key": "shelf",
-          "gx": 6,
-          "gy": 1,
-          "rotation": 0,
+          "gx": 0.9913150151071803,
+          "gy": 4.367179572128026,
+          "rotation": 3.034716014126847,
           "placed": true
         },
         {
           "key": "bed",
-          "gx": 4,
-          "gy": 5,
-          "rotation": 0,
+          "gx": 4.0,
+          "gy": 5.0,
+          "rotation": 0.0,
           "placed": true
         },
         {
           "key": "table",
-          "gx": 0,
-          "gy": 9,
-          "rotation": 2,
+          "gx": 8.222480827051271,
+          "gy": 0.537706305595816,
+          "rotation": 0.028195202369993094,
           "placed": true
         },
         {
           "key": "tv_unit",
-          "gx": 1,
-          "gy": 5,
-          "rotation": 0,
+          "gx": 3.777041551827763,
+          "gy": 0.7121264841984569,
+          "rotation": 0.03992716824203324,
           "placed": true
         },
         {
           "key": "chair",
-          "gx": 10,
-          "gy": 1,
-          "rotation": 1,
+          "gx": 10.82929008741373,
+          "gy": 10.110445728205397,
+          "rotation": 0.06893858326372704,
           "placed": true
         },
         {
           "key": "ceiling_light",
-          "gx": 9,
-          "gy": 7,
-          "rotation": 0,
+          "gx": 3.5980830537022648,
+          "gy": 4.67320705632892,
+          "rotation": 3.421275100711063,
           "placed": true
         }
       ],
-      "cost": 1.1033342907531138,
+      "cost": 1.2582099385537195,
       "score_breakdown": [
         {
           "name": "clearance_violation",
@@ -141,7 +143,7 @@
         },
         {
           "name": "pairwise_distance_penalty",
-          "value": 0.06155281280883029
+          "value": 0.21653822182358118
         },
         {
           "name": "conversation_penalty",
@@ -149,7 +151,7 @@
         },
         {
           "name": "visual_balance_penalty",
-          "value": 0.04178147794428367
+          "value": 0.041671716730138406
         },
         {
           "name": "alignment_penalty",
@@ -157,63 +159,63 @@
         }
       ],
       "violations": [
-        "TV Unit to Table distance 4.12 is outside [1, 4]",
+        "TV Unit to Table distance 4.43 is outside [1, 4]",
         "Bed is not anchored near a wall"
       ],
       "valid": true,
-      "accepted_steps": 185,
-      "source_sample_index": 565
+      "accepted_steps": 160,
+      "source_sample_index": 445
     },
     {
       "placements": [
         {
           "key": "shelf",
-          "gx": 10,
-          "gy": 4,
-          "rotation": 1,
+          "gx": 0.9913150151071803,
+          "gy": 4.367179572128026,
+          "rotation": 3.034716014126847,
           "placed": true
         },
         {
           "key": "bed",
-          "gx": 4,
-          "gy": 5,
-          "rotation": 0,
+          "gx": 4.0,
+          "gy": 5.0,
+          "rotation": 0.0,
           "placed": true
         },
         {
           "key": "table",
-          "gx": 4,
-          "gy": 0,
-          "rotation": 1,
+          "gx": 3.777041551827763,
+          "gy": 0.7121264841984569,
+          "rotation": 0.03992716824203324,
           "placed": true
         },
         {
           "key": "tv_unit",
-          "gx": 0,
-          "gy": 3,
-          "rotation": 2,
+          "gx": 8.033470123991842,
+          "gy": 0.19716218506296368,
+          "rotation": 0.19512076697439446,
           "placed": true
         },
         {
           "key": "chair",
-          "gx": 1,
-          "gy": 9,
-          "rotation": 0,
+          "gx": 10.843254377919006,
+          "gy": 10.124410018710673,
+          "rotation": 0.049248101857056026,
           "placed": true
         },
         {
           "key": "ceiling_light",
-          "gx": 4,
-          "gy": 5,
-          "rotation": 3,
+          "gx": 3.6602846248508363,
+          "gy": 4.735408627477492,
+          "rotation": 3.7054412921035706,
           "placed": true
         }
       ],
-      "cost": 1.196161848355569,
+      "cost": 1.2584986109750216,
       "score_breakdown": [
         {
           "name": "clearance_violation",
-          "value": 0.0
+          "value": 0.00028867242130203863
         },
         {
           "name": "circulation_penalty",
@@ -221,7 +223,7 @@
         },
         {
           "name": "pairwise_distance_penalty",
-          "value": 0.15058131676065667
+          "value": 0.21653822182358118
         },
         {
           "name": "conversation_penalty",
@@ -229,7 +231,7 @@
         },
         {
           "name": "visual_balance_penalty",
-          "value": 0.04558053159491237
+          "value": 0.041671716730138406
         },
         {
           "name": "alignment_penalty",
@@ -237,12 +239,13 @@
         }
       ],
       "violations": [
-        "TV Unit to Table distance 4.30 is outside [1, 4]",
+        "Bed clearance overlaps occupied area (0.00 cell units squared)",
+        "TV Unit to Table distance 4.43 is outside [1, 4]",
         "Bed is not anchored near a wall"
       ],
       "valid": true,
-      "accepted_steps": 279,
-      "source_sample_index": 850
+      "accepted_steps": 154,
+      "source_sample_index": 430
     }
   ]
 }

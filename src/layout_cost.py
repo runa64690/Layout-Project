@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from spatial_geometry import bounds, intersection_area, occupied_cells, rect_polygon
 from collections import deque
 from dataclasses import dataclass
 from typing import Callable
@@ -53,48 +54,58 @@ def rect_intersection_area_cells(
     return (x1 - x0) * (y1 - y0)
 
 
-def build_fall_zone_rect(item: Furniture) -> tuple[int, int, int, int] | None:
+def _side_zone(item, direction, depth):
+    w, d = item.local_size
+    if direction == Direction.NORTH:
+        rect = (-w/2, d/2, w/2, d/2+depth)
+    elif direction == Direction.EAST:
+        rect = (w/2, -d/2, w/2+depth, d/2)
+    elif direction == Direction.SOUTH:
+        rect = (-w/2, -d/2-depth, w/2, -d/2)
+    else:
+        rect = (-w/2-depth, -d/2, -w/2, d/2)
+    return item.local_rect(rect)
+
+
+def _local_direction(item, direction, base_direction):
+    if base_direction is not None:
+        return base_direction
+    # Legacy Furniture constructors supply an already rotated cardinal direction.
+    from design_models import rotate_direction
+    return rotate_direction(direction, -item.rotation)
+
+
+def build_fall_zone_polygon(item):
     if item.fall_dir is None:
         return None
-
-    gx, gy, gw, gd, h = item.gx, item.gy, item.gw, item.gd, item.h_cell
-    if item.fall_dir == Direction.NORTH:
-        return (gx, gy + gd, gx + gw, gy + gd + h)
-    if item.fall_dir == Direction.EAST:
-        return (gx + gw, gy, gx + gw + h, gy + gd)
-    if item.fall_dir == Direction.SOUTH:
-        return (gx, gy - h, gx + gw, gy)
-    if item.fall_dir == Direction.WEST:
-        return (gx - h, gy, gx, gy + gd)
-    return None
+    return _side_zone(item, _local_direction(item, item.fall_dir, item.base_fall_dir), item.h_cell)
 
 
-def build_bed_head_zone_rect(bed: Furniture) -> tuple[int, int, int, int]:
-    if bed.pillow_side is None:
-        raise ValueError(f"{bed.name}: bed must have pillow_side")
-
-    band = 2
-    if bed.pillow_side == Direction.NORTH:
-        return (bed.gx, bed.gy + bed.gd, bed.gx + bed.gw, bed.gy + bed.gd + band)
-    if bed.pillow_side == Direction.SOUTH:
-        return (bed.gx, bed.gy - band, bed.gx + bed.gw, bed.gy)
-    if bed.pillow_side == Direction.EAST:
-        return (bed.gx + bed.gw, bed.gy, bed.gx + bed.gw + band, bed.gy + bed.gd)
-    return (bed.gx - band, bed.gy, bed.gx, bed.gy + bed.gd)
+def build_bed_head_zone_polygon(item):
+    if item.pillow_side is None:
+        raise ValueError(f"{item.name}: bed must have pillow_side")
+    return _side_zone(item, _local_direction(item, item.pillow_side, item.base_pillow_side), 2)
 
 
-def total_fall_hazard_overlap_cells(items: list[Furniture]) -> int:
+def build_fall_zone_rect(item):
+    polygon = build_fall_zone_polygon(item)
+    return bounds(polygon) if polygon else None
+
+
+def build_bed_head_zone_rect(item):
+    return bounds(build_bed_head_zone_polygon(item))
+
+
+def total_fall_hazard_overlap_cells(items: list[Furniture]) -> float:
     beds = [item for item in items if item.furniture_type == FurnitureType.BED]
-    total_overlap = 0
+    total = 0.0
     for item in items:
         if item.furniture_type == FurnitureType.BED:
             continue
-        zone = build_fall_zone_rect(item)
-        if zone is None:
-            continue
-        for bed in beds:
-            total_overlap += rect_intersection_area_cells(zone, rect_of(bed))
-    return total_overlap
+        zone = build_fall_zone_polygon(item)
+        if zone:
+            total += sum(intersection_area(zone, bed.footprint) for bed in beds)
+    return total
 
 
 def _distance_penalty(distance: float, minimum: float, maximum: float) -> float:
@@ -106,16 +117,17 @@ def _distance_penalty(distance: float, minimum: float, maximum: float) -> float:
 
 
 def _iter_cells(rect: tuple[int, int, int, int]) -> list[tuple[int, int]]:
-    return [(x, y) for x in range(rect[0], rect[2]) for y in range(rect[1], rect[3])]
+    return [(x, y) for x in range(math.floor(rect[0]), math.ceil(rect[2])) for y in range(math.floor(rect[1]), math.ceil(rect[3]))]
 
 
 def _build_occupancy(room: Room, items: list[Furniture]) -> list[list[bool]]:
     grid = [[False for _ in range(room.grid_h)] for _ in range(room.grid_w)]
     for item in items:
-        for x in range(item.gx, item.gx + item.gw):
-            for y in range(item.gy, item.gy + item.gd):
-                if 0 <= x < room.grid_w and 0 <= y < room.grid_h:
-                    grid[x][y] = True
+        if item.ceiling_mounted:
+            continue
+        for x, y in occupied_cells(item.footprint):
+            if 0 <= x < room.grid_w and 0 <= y < room.grid_h:
+                grid[x][y] = True
     return grid
 
 
@@ -128,56 +140,30 @@ def _distance_to_nearest_wall(room: Room, item: Furniture) -> int:
     )
 
 
-def _clearance_rects(item: Furniture) -> list[tuple[int, int, int, int]]:
+def _clearance_polygons(item):
     rule = item.clearance
     if rule is None:
         return []
-
+    w, d = item.local_size
     margin = rule.min_cells
-    rects: list[tuple[int, int, int, int]] = []
     if rule.mode == "all":
-        rects.append((item.gx - margin, item.gy - margin, item.gx + item.gw + margin, item.gy + item.gd + margin))
-        return rects
+        return [item.local_rect((-w/2-margin, -d/2-margin, w/2+margin, d/2+margin))]
     if rule.mode == "front":
-        direction = item.rotation % 4
-        if direction == 0:
-            rects.append((item.gx, item.gy + item.gd, item.gx + item.gw, item.gy + item.gd + margin))
-        elif direction == 1:
-            rects.append((item.gx + item.gw, item.gy, item.gx + item.gw + margin, item.gy + item.gd))
-        elif direction == 2:
-            rects.append((item.gx, item.gy - margin, item.gx + item.gw, item.gy))
-        else:
-            rects.append((item.gx - margin, item.gy, item.gx, item.gy + item.gd))
-        return rects
-    if item.gw >= item.gd:
-        rects.append((item.gx, item.gy - margin, item.gx + item.gw, item.gy))
-        rects.append((item.gx, item.gy + item.gd, item.gx + item.gw, item.gy + item.gd + margin))
-    else:
-        rects.append((item.gx - margin, item.gy, item.gx, item.gy + item.gd))
-        rects.append((item.gx + item.gw, item.gy, item.gx + item.gw + margin, item.gy + item.gd))
-    return rects
+        return [_side_zone(item, Direction.NORTH, margin)]
+    directions = (Direction.NORTH, Direction.SOUTH) if w >= d else (Direction.EAST, Direction.WEST)
+    return [_side_zone(item, direction, margin) for direction in directions]
 
 
 def score_clearance_violation(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
-    del room
-    occupied: dict[tuple[int, int], str] = {}
-    for item in items:
-        for cell in _iter_cells(rect_of(item)):
-            occupied[cell] = item.name
-
     score = 0.0
-    violations: list[str] = []
+    violations = []
     for item in items:
-        for rect in _clearance_rects(item):
-            overlap_cells = 0
-            for cell in _iter_cells(rect):
-                owner = occupied.get(cell)
-                if owner is None or owner == item.name:
-                    continue
-                overlap_cells += 1
-            if overlap_cells > 0:
-                score += overlap_cells
-                violations.append(f"{item.name} clearance overlaps occupied cells ({overlap_cells})")
+        for zone in _clearance_polygons(item):
+            area = sum(intersection_area(zone, other.footprint) for other in items
+                       if other.key != item.key and other.ceiling_mounted == item.ceiling_mounted)
+            if area > 1e-6:
+                score += area
+                violations.append(f"{item.name} clearance overlaps occupied area ({area:.2f} cell units squared)")
     return score, violations
 
 
@@ -285,12 +271,12 @@ def score_conversation_penalty(room: Room, items: list[Furniture]) -> tuple[floa
 
 
 def score_visual_balance_penalty(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
-    total_area = sum(item.gw * item.gd for item in items)
+    total_area = sum((item.local_size[0] * item.local_size[1]) for item in items)
     if total_area <= 0:
         return 0.0, []
 
-    centroid_x = sum((item.gx + item.gw / 2.0) * item.gw * item.gd for item in items) / total_area
-    centroid_y = sum((item.gy + item.gd / 2.0) * item.gw * item.gd for item in items) / total_area
+    centroid_x = sum((item.gx + item.gw / 2.0) * (item.local_size[0] * item.local_size[1]) for item in items) / total_area
+    centroid_y = sum((item.gy + item.gd / 2.0) * (item.local_size[0] * item.local_size[1]) for item in items) / total_area
     room_center = (room.grid_w / 2.0, room.grid_h / 2.0)
     diagonal = math.hypot(room.grid_w, room.grid_h)
     distance = math.dist((centroid_x, centroid_y), room_center)

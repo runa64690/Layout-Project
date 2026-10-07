@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "cell_size_m": 0.25,
+  "continuous_placement": true,
   "furniture": [
     {
       "key": "shelf",

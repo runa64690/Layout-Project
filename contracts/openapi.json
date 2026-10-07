@@ -223,7 +223,7 @@
             "title": "Violations"
           },
           "fall_overlap_cells": {
-            "type": "integer",
+            "type": "number",
             "title": "Fall Overlap Cells"
           },
           "regions": {
@@ -472,24 +472,25 @@
             "title": "Key"
           },
           "gx": {
-            "type": "integer",
+            "type": "number",
             "maximum": 64.0,
             "minimum": -64.0,
             "title": "Gx",
             "default": 0
           },
           "gy": {
-            "type": "integer",
+            "type": "number",
             "maximum": 64.0,
             "minimum": -64.0,
             "title": "Gy",
             "default": 0
           },
           "rotation": {
-            "type": "integer",
-            "maximum": 3.0,
+            "type": "number",
+            "exclusiveMaximum": 4.0,
             "minimum": 0.0,
             "title": "Rotation",
+            "description": "Clockwise quarter turns, fractional values allowed (0.5 = 45 degrees)",
             "default": 0
           },
           "placed": {
@@ -505,6 +506,25 @@
         ],
         "title": "PlacementDTO"
       },
+      "PointDTO": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "PointDTO"
+      },
       "RegionDTO": {
         "properties": {
           "kind": {
@@ -516,20 +536,27 @@
             "title": "Key"
           },
           "x0": {
-            "type": "integer",
+            "type": "number",
             "title": "X0"
           },
           "y0": {
-            "type": "integer",
+            "type": "number",
             "title": "Y0"
           },
           "x1": {
-            "type": "integer",
+            "type": "number",
             "title": "X1"
           },
           "y1": {
-            "type": "integer",
+            "type": "number",
             "title": "Y1"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/PointDTO"
+            },
+            "type": "array",
+            "title": "Points"
           }
         },
         "additionalProperties": false,
@@ -540,7 +567,8 @@
           "x0",
           "y0",
           "x1",
-          "y1"
+          "y1",
+          "points"
         ],
         "title": "RegionDTO"
       },

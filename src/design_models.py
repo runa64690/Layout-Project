@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+import math
+from spatial_geometry import EPSILON, rotated_size, rect_polygon, transform_polygon, overlaps
 
 CELL_SIZE_M = 0.25
 
@@ -64,9 +66,9 @@ class FurniturePreset:
 class PlacedFurniture:
     key: str
     label: str
-    gx: int | None = None
-    gy: int | None = None
-    rotation: int = 0
+    gx: float | None = None
+    gy: float | None = None
+    rotation: float = 0
     placed: bool = False
 
 
@@ -185,19 +187,39 @@ class Room:
 class Furniture:
     key: str
     name: str
-    gx: int
-    gy: int
-    gw: int
-    gd: int
+    gx: float
+    gy: float
+    gw: float
+    gd: float
     h_cell: int
     furniture_type: FurnitureType = FurnitureType.OTHER
-    rotation: int = 0
+    rotation: float = 0
     fall_dir: Direction | None = None
     pillow_side: Direction | None = None
     clearance: ClearanceRule | None = None
     pairwise_rules: tuple[PairwiseRule, ...] = field(default_factory=tuple)
     conversation_seat: bool = False
     ceiling_mounted: bool = False
+
+    # Original catalog dimensions; gw/gd remain the world bounding-box size.
+    base_gw: float | None = None
+    base_gd: float | None = None
+    base_fall_dir: Direction | None = None
+    base_pillow_side: Direction | None = None
+
+    @property
+    def local_size(self):
+        if self.base_gw is not None:
+            return self.base_gw, self.base_gd
+        return (self.gw, self.gd) if round(self.rotation) % 2 == 0 else (self.gd, self.gw)
+
+    def local_rect(self, rect):
+        return transform_polygon(rect_polygon(rect), self.center, self.rotation)
+
+    @property
+    def footprint(self):
+        w, d = self.local_size
+        return self.local_rect((-w/2, -d/2, w/2, d/2))
 
     @property
     def h_m(self) -> float:
@@ -278,13 +300,14 @@ def rotate_direction(direction: Direction | None, quarter_turns: int) -> Directi
     if direction is None:
         return None
     idx = DIRECTION_ORDER.index(direction)
-    return DIRECTION_ORDER[(idx + quarter_turns) % 4]
+    return DIRECTION_ORDER[(idx + round(quarter_turns)) % 4]
 
 
-def get_rotated_size(gw: int, gd: int, rotation: int) -> tuple[int, int]:
-    if rotation % 2 == 0:
-        return gw, gd
-    return gd, gw
+def get_rotated_size(gw: float, gd: float, rotation: float) -> tuple[float, float]:
+    # Exact cardinal sizes also preserve existing grid-based callers.
+    if rotation % 1 == 0:
+        return (gw, gd) if rotation % 2 == 0 else (gd, gw)
+    return rotated_size(gw, gd, rotation)
 
 
 def build_furniture_from_placement(key: str, placement: PlacedFurniture) -> Furniture:
@@ -303,6 +326,8 @@ def build_furniture_from_placement(key: str, placement: PlacedFurniture) -> Furn
         h_cell=preset.h_cell,
         furniture_type=preset.furniture_type,
         rotation=placement.rotation,
+        base_gw=preset.gw, base_gd=preset.gd,
+        base_fall_dir=preset.fall_dir, base_pillow_side=preset.pillow_side,
         fall_dir=rotate_direction(preset.fall_dir, placement.rotation),
         pillow_side=rotate_direction(preset.pillow_side, placement.rotation),
         clearance=preset.clearance,
@@ -336,29 +361,23 @@ def clone_placements(placements: dict[str, PlacedFurniture]) -> dict[str, Placed
 
 
 def validate_layout(room: Room, items: list[Furniture]) -> None:
-    floor_occupied: dict[tuple[int, int], str] = {}
-    ceiling_occupied: dict[tuple[int, int], str] = {}
-
-    for item in items:
-        room.assert_rect_inside(item.gx, item.gy, item.gw, item.gd, item.name)
-
-        if item.h_cell <= 0:
-            raise ValueError(f"{item.name}: h_cell must be >= 1")
-
+    for index, item in enumerate(items):
+        if not all(math.isfinite(v) for v in (item.gx, item.gy, item.gw, item.gd, item.rotation)):
+            raise ValueError(f"{item.name}: non-finite geometry")
+        if not 0 <= item.rotation < 4:
+            raise ValueError(f"{item.name}: rotation must be in [0, 4)")
+        if item.gw <= 0 or item.gd <= 0 or item.h_cell <= 0:
+            raise ValueError(f"{item.name}: dimensions must be positive")
+        polygon = item.footprint
+        if any(x < -EPSILON or y < -EPSILON or x > room.grid_w + EPSILON
+               or y > room.grid_h + EPSILON for x, y in polygon):
+            raise ValueError(f"{item.name}: out of room bounds")
         if item.furniture_type == FurnitureType.BED and item.pillow_side is None:
             raise ValueError(f"{item.name}: BED must have pillow_side")
-
-        for x in range(item.gx, item.gx + item.gw):
-            for y in range(item.gy, item.gy + item.gd):
-                key = (x, y)
-                occupied = ceiling_occupied if item.ceiling_mounted else floor_occupied
-                if key in occupied:
-                    other = occupied[key]
-                    raise ValueError(
-                        f"Furniture overlap: cell={key} is used by both {other} and {item.name}"
-                    )
-                occupied[key] = item.name
-
-    for anchor in room.door_anchor_cells():
-        if anchor in floor_occupied:
-            raise ValueError(f"Door clearance blocked at cell={anchor} by {floor_occupied[anchor]}")
+        for other in items[:index]:
+            if item.ceiling_mounted == other.ceiling_mounted and overlaps(polygon, other.footprint):
+                raise ValueError(f"Furniture overlap: {other.name} and {item.name}")
+        if not item.ceiling_mounted:
+            for x, y in room.door_anchor_cells():
+                if overlaps(polygon, rect_polygon((x, y, x+1, y+1))):
+                    raise ValueError(f"Door clearance blocked at cell={(x, y)} by {item.name}")
