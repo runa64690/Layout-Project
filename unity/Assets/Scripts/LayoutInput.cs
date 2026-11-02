@@ -10,6 +10,9 @@ namespace FurnitureLayout
         public LayoutRenderer View;
         public Camera Camera;
         public string SelectedKey, SelectedOpening;
+        public bool WallSnapEnabled = true;
+        readonly WallSnap wallSnap = new WallSnap();
+        float dragRotation;
         public Action<string> SelectionChanged;
         public Action<string> Message;
         Placement drag;
@@ -93,16 +96,19 @@ namespace FurnitureLayout
             }
             if (SelectedKey == null) return;
             drag=State.Find(SelectedKey).Copy(); drag.placed=true;
+            dragRotation=drag.rotation; wallSnap.Reset();
             if (!Move(screen))
             {
-                Message?.Invoke("Furniture does not fit inside the room at this angle.");
+                Message?.Invoke("この角度では家具が部屋に収まりません。");
                 CancelDrag();
             }
         }
         bool Move(Vector2 screen)
         {
             if (drag == null || !Point(screen,out var point)) return false;
+            drag.rotation=dragRotation;
             if (!GridCoordinates.ClampToRoom(drag,State.Catalog.Find(drag.key),State.Data.room,point-grabOffset)) return false;
+            drag=wallSnap.Resolve(State,drag,WallSnapEnabled);
             View.Preview(drag,State.CanPlace(drag,State.Data.placements));
             return true;
         }
@@ -115,15 +121,15 @@ namespace FurnitureLayout
                 var room=State.Data.room;
                 float nearest=Mathf.Min(Mathf.Abs(p.x),Mathf.Abs(p.x-room.grid_w),Mathf.Abs(p.y),Mathf.Abs(p.y-room.grid_h));
                 string wall=nearest==Mathf.Abs(p.x) ? "LEFT" : nearest==Mathf.Abs(p.x-room.grid_w) ? "RIGHT" : nearest==Mathf.Abs(p.y) ? "BOTTOM" : "TOP";
-                if (!State.MoveOpening(SelectedOpening,wall,Mathf.FloorToInt(wall=="LEFT"||wall=="RIGHT" ? p.y : p.x))) Message?.Invoke("Opening does not fit, overlaps another opening, or blocks furniture.");
+                if (!State.MoveOpening(SelectedOpening,wall,Mathf.FloorToInt(wall=="LEFT"||wall=="RIGHT" ? p.y : p.x))) Message?.Invoke("開口部が壁に収まらないか、他の開口部・家具と重なっています。");
             }
             else if (!overUI && drag != null)
             {
-                if (Move(screen) && !State.Place(drag)) Message?.Invoke("Cannot place here: outside room, overlap, or door clearance.");
+                if (Move(screen) && !State.Place(drag)) Message?.Invoke("ここには配置できません。部屋の外、家具の重なり、ドア前の空間を確認してください。");
             }
             CancelDrag();
         }
-        void CancelDrag() { pressed=false; drag=null; View.ClearPreview(); }
+        void CancelDrag() { pressed=false; drag=null; wallSnap.Reset(); View.ClearPreview(); }
         public void Rotate(float degrees = 1)
         {
             if (SelectedKey != null) SetAngle(State.Find(SelectedKey).rotation*90+degrees);
@@ -141,7 +147,7 @@ namespace FurnitureLayout
             if (p.placed)
             {
                 p.gx+=(oldSize.x-newSize.x)/2; p.gy+=(oldSize.y-newSize.y)/2;
-                if (!State.Place(p)) Message?.Invoke("Rotation would overlap or leave the room.");
+                if (!State.Place(p)) Message?.Invoke("この角度では家具が重なるか、部屋の外にはみ出します。");
             }
             else { State.Find(SelectedKey).rotation=p.rotation; State.Touch(); }
         }

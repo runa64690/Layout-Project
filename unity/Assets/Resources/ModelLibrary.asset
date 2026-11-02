@@ -14,5 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FurnitureLayout.ModelLibrary
   entries:
   - modelId: shelf
-    prefab: {fileID: 5565839162704062645, guid: 1a3ab400ec467cc40bf877ad1d557a1f, type: 3}
+    prefab: {fileID: 3008572687198834596, guid: 279a69bffc1270f4b8d5d03e906e2fd0, type: 3}
+    rotationCorrection: {x: 0, y: 0, z: 0}
+  - modelId: bed
+    prefab: {fileID: 812428223442915858, guid: ffa4360d780dae24caca866269ae45a0, type: 3}
+    rotationCorrection: {x: 0, y: 0, z: 0}
+  - modelId: chair
+    prefab: {fileID: 1195578344325261868, guid: 813e9b0adb68e5d4482c3bed271bc332, type: 3}
+    rotationCorrection: {x: 0, y: 0, z: 0}
+  - modelId: table
+    prefab: {fileID: 1496696113588759231, guid: 4ea15e0981248954ea9653d2bab7c9d3, type: 3}
+    rotationCorrection: {x: 0, y: 0, z: 0}
+  - modelId: TV
+    prefab: {fileID: 8434045038760121567, guid: bfc32a48034978b49a03862470a09c27, type: 3}
     rotationCorrection: {x: 0, y: 0, z: 0}

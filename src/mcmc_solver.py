@@ -2,20 +2,21 @@ from __future__ import annotations
 
 import math
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from design_models import (
     FURNITURE_PRESETS,
-    FurniturePreset,
     PlacedFurniture,
     Room,
     clone_placements,
     get_rotated_size,
     build_items_from_placements, build_furniture_from_placement, validate_layout,
 )
-from layout_cost import LayoutScore, evaluate_layout_from_placements
+from layout_cost import evaluate_layout_from_placements
 from layout_geometry import build_door_front_rect
 from spatial_geometry import overlaps, rect_polygon, intersection_area
+from layout_safety import SafetyAssessment
+from wall_alignment import wall_placements
 
 
 @dataclass
@@ -26,10 +27,20 @@ class LayoutSolution:
     violations: list[str]
     accepted_steps: int
     source_sample_index: int
+    safety: SafetyAssessment = field(default_factory=SafetyAssessment)
+    natural_cost: float = 0.0
+
+    @property
+    def valid(self):
+        return "invalid_layout" not in self.score_breakdown
+
+    @property
+    def rank(self):
+        return (not self.valid, *self.safety.priority, self.natural_cost if self.valid else self.cost)
 
 
 class MCMCSolver:
-    def __init__(self, beta: float = 1.2, invalid_penalty: float = 1000.0, *, continuous: bool = True) -> None:
+    def __init__(self, beta: float = 1.2, invalid_penalty: float = 1000000.0, *, continuous: bool = True) -> None:
         self.continuous = continuous
         self.beta = beta
         self.invalid_penalty = invalid_penalty
@@ -52,6 +63,24 @@ class MCMCSolver:
         #初期状態を作成,
         current = self._randomize_missing(room, clone_placements(placements), fixed, rng)
         current_solution = self._evaluate(room, current)
+        # A failed greedy packing should not force the entire chain to start
+        # with stacked furniture. Retry movable furniture; fixed poses survive.
+        for _ in range(12):
+            if current_solution.valid:
+                break
+            restart = clone_placements(placements)
+            for key, p in restart.items():
+                if key not in fixed:
+                    p.placed = False
+                    p.gx = p.gy = None
+            restart = self._randomize_missing(room, restart, fixed, rng)
+            alternative = self._evaluate(room, restart)
+            if alternative.rank < current_solution.rank:
+                current, current_solution = restart, alternative
+        # A wall-oriented seed/refinement is outside the symmetric MCMC kernel.
+        current_solution = self._refine_walls(room, current_solution, fixed)
+        current = clone_placements(current_solution.placements)
+        best = current_solution
 
         accepted_steps = 0
         samples: list[LayoutSolution] = []
@@ -68,6 +97,10 @@ class MCMCSolver:
                 current = neighbor
                 current_solution = neighbor_solution
                 accepted_steps += 1
+                current_solution.accepted_steps = accepted_steps
+                current_solution.source_sample_index = step
+                if current_solution.rank < best.rank:
+                    best = current_solution
 
             if step >= burn_in and (step - burn_in) % sample_stride == 0:
                 samples.append(
@@ -78,11 +111,41 @@ class MCMCSolver:
                         violations=list(current_solution.violations),
                         accepted_steps=accepted_steps,
                         source_sample_index=step,
+                        safety=current_solution.safety,
+                        natural_cost=current_solution.natural_cost,
                     )
                 )
 
-        ranked = self._dedupe_by_signature(sorted(samples, key=lambda sample: sample.cost))
-        return self._select_diverse_candidates(room, ranked, candidate_count, mmr_lambda)
+        samples.append(best)
+        ranked = self._dedupe_by_signature(sorted((s for s in samples if s.valid), key=lambda s: s.rank))
+        # Refine promising solutions only; always retain the originals.
+        ranked += [self._refine_walls(room, s, fixed) for s in ranked[:candidate_count * 2]]
+        ranked = self._dedupe_by_signature(sorted(ranked, key=lambda s: s.rank))
+        selected = self._select_diverse_candidates(room, ranked, candidate_count, mmr_lambda)
+        for solution in selected:
+            for key, p in solution.placements.items():
+                original = placements[key]
+                if (p.gx, p.gy, p.rotation, p.placed) != (original.gx, original.gy, original.rotation, original.placed):
+                    p.installation_confirmed = False
+        return sorted(selected, key=lambda s: s.rank)
+
+    def _refine_walls(self, room, solution, fixed):
+        best = solution
+        for key in solution.placements:
+            if key in fixed:
+                continue
+            original = best.placements[key]
+            if not original.placed:
+                continue
+            for placement in wall_placements(room, key, original, discrete=not self.continuous):
+                candidate = clone_placements(best.placements)
+                candidate[key] = placement
+                evaluated = self._evaluate(room, candidate)
+                if evaluated.rank < best.rank:
+                    evaluated.accepted_steps = solution.accepted_steps
+                    evaluated.source_sample_index = solution.source_sample_index
+                    best = evaluated
+        return best
 
     def _randomize_missing(
         self,
@@ -91,7 +154,10 @@ class MCMCSolver:
         fixed_keys: set[str],
         rng: random.Random,
     ) -> dict[str, PlacedFurniture]:
-        for key, placement in placements.items():
+        order = sorted(placements, key=lambda k: (FURNITURE_PRESETS[k].ceiling_mounted,
+                                                  -FURNITURE_PRESETS[k].gw*FURNITURE_PRESETS[k].gd))
+        for key in order:
+            placement = placements[key]
             if key in fixed_keys and placement.placed:
                 continue
             if placement.placed and placement.gx is not None and placement.gy is not None:
@@ -108,6 +174,24 @@ class MCMCSolver:
         rng: random.Random,
     ) -> None:
         preset = FURNITURE_PRESETS[key]
+        if hasattr(room, "boundary"):
+            # Try actual wall angles before grid seeds, including thin diagonal
+            # rooms where no cardinal placement can fit. Always validate the
+            # whole layout before accepting a seed.
+            from dataclasses import replace
+            seed = replace(placement, gx=room.grid_w/2-preset.gw/2,
+                           gy=room.grid_h/2-preset.gd/2, placed=True)
+            aligned = list(wall_placements(room, key, seed))
+            rng.shuffle(aligned)
+            for p in aligned:
+                candidate = clone_placements(placements)
+                candidate[key] = p
+                try:
+                    validate_layout(room, build_items_from_placements(candidate))
+                except ValueError:
+                    continue
+                placement.gx, placement.gy, placement.rotation, placement.placed = p.gx, p.gy, p.rotation, True
+                return
         candidates = [(gx, gy, rotation) for rotation in range(4) for gx in range(room.grid_w) for gy in range(room.grid_h)]
         rng.shuffle(candidates)
         for gx, gy, rotation in candidates:
@@ -139,7 +223,7 @@ class MCMCSolver:
         except ValueError:
             return False
         item = build_furniture_from_placement(key, candidate[key])
-        if not item.ceiling_mounted:
+        if not item.ceiling_mounted and not hasattr(room, "boundary"):
             for door in room.doors:
                 rect = build_door_front_rect(room, door)
                 if rect and overlaps(item.footprint, rect_polygon(rect)):
@@ -179,15 +263,17 @@ class MCMCSolver:
                 return proposal
             preset = FURNITURE_PRESETS[key]
             old_w, old_d = get_rotated_size(preset.gw, preset.gd, placement.rotation)
-            placement.rotation = (placement.rotation + rng.uniform(-1/3, 1/3)) % 4
+            angle_step = rng.choice((1/30, 1/3))
+            placement.rotation = (placement.rotation + rng.uniform(-angle_step, angle_step)) % 4
             new_w, new_d = get_rotated_size(preset.gw, preset.gd, placement.rotation)
             if placement.gx is not None and placement.gy is not None:
                 placement.gx += (old_w - new_w) / 2
                 placement.gy += (old_d - new_d) / 2
             return proposal
 
-        dx = rng.uniform(-2, 2) if self.continuous else rng.randint(-2, 2)
-        dy = rng.uniform(-2, 2) if self.continuous else rng.randint(-2, 2)
+        step_size = rng.choice((.2, 2)) if self.continuous else 2
+        dx = rng.uniform(-step_size, step_size) if self.continuous else rng.randint(-2, 2)
+        dy = rng.uniform(-step_size, step_size) if self.continuous else rng.randint(-2, 2)
         if placement.gx is None or placement.gy is None:
             placement.gx = 0
             placement.gy = 0
@@ -208,6 +294,8 @@ class MCMCSolver:
                 violations=score.violations,
                 accepted_steps=0,
                 source_sample_index=0,
+                safety=score.safety,
+                natural_cost=score.natural_cost,
             )
         except ValueError as exc:
 
@@ -242,12 +330,20 @@ class MCMCSolver:
         items = [build_furniture_from_placement(key, p) for key, p in placements.items()
                  if p.placed and p.gx is not None and p.gy is not None]
         for index, item in enumerate(items):
+            if hasattr(room, "boundary"):
+                from shapely.geometry import Polygon
+                penalty += Polygon(item.footprint).difference(room.polygon).area * 100
             for other in items[index + 1:]:
                 if item.ceiling_mounted == other.ceiling_mounted:
                     penalty += intersection_area(item.footprint, other.footprint) * 50.0
             if not item.ceiling_mounted:
-                for x, y in room.door_anchor_cells():
-                    penalty += intersection_area(item.footprint, rect_polygon((x, y, x+1, y+1))) * 150.0
+                for door in room.doors:
+                    if hasattr(room, "boundary"):
+                        penalty += room.door_front(door).intersection(Polygon(item.footprint)).area * 150
+                        continue
+                    rect = build_door_front_rect(room, door)
+                    if rect:
+                        penalty += intersection_area(item.footprint, rect_polygon(rect)) * 150.0
         return penalty
 
     def _signature(self, placements: dict[str, PlacedFurniture]) -> tuple[tuple[str, float, float, float], ...]:
@@ -306,6 +402,9 @@ class MCMCSolver:
             best_index = 0
             best_score = float("-inf")
             for index, candidate in enumerate(remaining):
+                # Diversity can choose only within the best remaining safety tier.
+                if candidate.safety.priority != min(s.safety.priority for s in remaining):
+                    continue
                 relevance = 1.0 - (candidate.cost / max_cost)
                 diversity = min(
                     self._layout_distance(room, candidate.placements, chosen.placements)

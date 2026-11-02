@@ -6,63 +6,76 @@
   "error": null,
   "candidates": [
     {
+      "evaluation_version": 2,
       "placements": [
         {
           "key": "shelf",
-          "gx": 1.094549955142405,
-          "gy": 4.4165707593107095,
-          "rotation": 3.001365677902178,
-          "placed": true
+          "gx": 7.898615345610073,
+          "gy": 9.794429772595906,
+          "rotation": 1.9671352087662526,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "bed",
           "gx": 4.0,
           "gy": 5.0,
           "rotation": 0.0,
-          "placed": true
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "table",
-          "gx": 3.3490663102843548,
-          "gy": 0.49351471821097315,
-          "rotation": 0.08578087200922507,
-          "placed": true
+          "gx": 6.343676058623258,
+          "gy": 1.1501985110789075,
+          "rotation": 3.088785132252408,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "tv_unit",
-          "gx": 7.381335204233537,
-          "gy": 0.11885336176114625,
-          "rotation": 0.1458304071770682,
-          "placed": true
+          "gx": 9.92,
+          "gy": 0.0,
+          "rotation": 3.0,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "chair",
-          "gx": 10.158882570058587,
-          "gy": 10.362788448032939,
-          "rotation": 0.12504666050281266,
-          "placed": true
+          "gx": 0.2928033070812338,
+          "gy": 0.8208073200257019,
+          "rotation": 0.2725214405669621,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "ceiling_light",
-          "gx": 4.325094066010003,
-          "gy": 5.769752171056734,
-          "rotation": 2.921226197641766,
-          "placed": true
+          "gx": 4.8662568695930775,
+          "gy": 1.1480355533438118,
+          "rotation": 0.6214572760352491,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         }
       ],
-      "cost": 1.1824192324039164,
+      "cost": 1035.8075568033423,
       "score_breakdown": [
         {
           "name": "clearance_violation",
-          "value": 0.0
+          "value": 16.25280517113306
         },
         {
           "name": "circulation_penalty",
-          "value": 0.0
+          "value": 12.884615384615383
         },
         {
           "name": "pairwise_distance_penalty",
-          "value": 0.05359665159731364
+          "value": 0.0
         },
         {
           "name": "conversation_penalty",
@@ -70,80 +83,205 @@
         },
         {
           "name": "visual_balance_penalty",
-          "value": 0.03427262566419781
+          "value": 0.0
         },
         {
           "name": "alignment_penalty",
-          "value": 1.094549955142405
+          "value": 5.344017783061301
+        },
+        {
+          "name": "window_proximity_penalty",
+          "value": 0.8426434486632195
+        },
+        {
+          "name": "safety_violations",
+          "value": 1000.0
+        },
+        {
+          "name": "safety_overlap",
+          "value": 31.668260680967187
+        },
+        {
+          "name": "primary_overlap",
+          "value": 3.166826068096719
         }
       ],
       "violations": [
-        "TV Unit to Table distance 4.11 is outside [1, 4]",
-        "Shelf is not anchored near a wall",
-        "Bed is not anchored near a wall"
+        "Shelf clearance overlaps occupied area (2.22 cell units squared)",
+        "Bed clearance overlaps occupied area (2.34 cell units squared)",
+        "Bed clearance overlaps occupied area (2.54 cell units squared)",
+        "Table clearance overlaps occupied area (1.01 cell units squared)",
+        "14 free cells are unreachable from the exit",
+        "Bed: preferred face is not aligned with a solid wall",
+        "exposure: shelf:NORTH -> bed"
       ],
       "valid": true,
-      "accepted_steps": 247,
-      "source_sample_index": 730
+      "accepted_steps": 361,
+      "source_sample_index": 838,
+      "safety": {
+        "status": "unmet",
+        "violation_count": 1,
+        "overlap_area_m2": 0.4634487720722551,
+        "primary_overlap_area_m2": 0.4634487720722551,
+        "route_checks": 14,
+        "failed_route_checks": 0,
+        "issues": [
+          {
+            "kind": "exposure",
+            "scenario_id": "shelf:NORTH",
+            "source_key": "shelf",
+            "target_key": "bed",
+            "area_m2": 0.4634487720722551,
+            "primary": true
+          }
+        ],
+        "window_distances": [
+          {
+            "window_key": "window_1",
+            "target_key": "bed",
+            "distance_m": 0.75,
+            "penalty": 0.5714285714285714
+          },
+          {
+            "window_key": "window_1",
+            "target_key": "chair",
+            "distance_m": 2.6871133700192478,
+            "penalty": 0.2712148772346481
+          }
+        ],
+        "unassessed": []
+      },
+      "natural_cost": 35.32408178747296,
+      "mitigations": [
+        {
+          "key": "shelf",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "bed",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "table",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "tv_unit",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "chair",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "ceiling_light",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "window_1",
+          "kind": "window",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        }
+      ]
     },
     {
+      "evaluation_version": 2,
       "placements": [
         {
           "key": "shelf",
-          "gx": 0.9913150151071803,
-          "gy": 4.367179572128026,
-          "rotation": 3.034716014126847,
-          "placed": true
+          "gx": 7.898615345610073,
+          "gy": 9.794429772595906,
+          "rotation": 1.9671352087662526,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "bed",
           "gx": 4.0,
           "gy": 5.0,
           "rotation": 0.0,
-          "placed": true
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "table",
-          "gx": 8.222480827051271,
-          "gy": 0.537706305595816,
-          "rotation": 0.028195202369993094,
-          "placed": true
+          "gx": 6.343676058623258,
+          "gy": 1.1501985110789075,
+          "rotation": 3.088785132252408,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "tv_unit",
-          "gx": 3.777041551827763,
-          "gy": 0.7121264841984569,
-          "rotation": 0.03992716824203324,
-          "placed": true
+          "gx": 8.903676776896177,
+          "gy": 0.4024279695912765,
+          "rotation": 0.005778888202805588,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "chair",
-          "gx": 10.82929008741373,
-          "gy": 10.110445728205397,
-          "rotation": 0.06893858326372704,
-          "placed": true
+          "gx": 0.2928033070812338,
+          "gy": 0.8208073200257019,
+          "rotation": 0.2725214405669621,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "ceiling_light",
-          "gx": 3.5980830537022648,
-          "gy": 4.67320705632892,
-          "rotation": 3.421275100711063,
-          "placed": true
+          "gx": 4.8662568695930775,
+          "gy": 1.1480355533438118,
+          "rotation": 0.6214572760352491,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         }
       ],
-      "cost": 1.2582099385537195,
+      "cost": 1035.8092038435693,
       "score_breakdown": [
         {
           "name": "clearance_violation",
-          "value": 0.0
+          "value": 18.092662174593222
         },
         {
           "name": "circulation_penalty",
-          "value": 0.0
+          "value": 12.954545454545455
         },
         {
           "name": "pairwise_distance_penalty",
-          "value": 0.21653822182358118
+          "value": 0.0
         },
         {
           "name": "conversation_penalty",
@@ -151,79 +289,205 @@
         },
         {
           "name": "visual_balance_penalty",
-          "value": 0.041671716730138406
+          "value": 0.0
         },
         {
           "name": "alignment_penalty",
-          "value": 1.0
+          "value": 5.745687741572994
+        },
+        {
+          "name": "window_proximity_penalty",
+          "value": 0.8426434486632195
+        },
+        {
+          "name": "safety_violations",
+          "value": 1000.0
+        },
+        {
+          "name": "safety_overlap",
+          "value": 31.668260680967187
+        },
+        {
+          "name": "primary_overlap",
+          "value": 3.166826068096719
         }
       ],
       "violations": [
-        "TV Unit to Table distance 4.43 is outside [1, 4]",
-        "Bed is not anchored near a wall"
+        "Shelf clearance overlaps occupied area (2.22 cell units squared)",
+        "Bed clearance overlaps occupied area (2.34 cell units squared)",
+        "Bed clearance overlaps occupied area (2.54 cell units squared)",
+        "Table clearance overlaps occupied area (1.93 cell units squared)",
+        "14 free cells are unreachable from the exit",
+        "Bed: preferred face is not aligned with a solid wall",
+        "exposure: shelf:NORTH -> bed"
       ],
       "valid": true,
-      "accepted_steps": 160,
-      "source_sample_index": 445
+      "accepted_steps": 360,
+      "source_sample_index": 835,
+      "safety": {
+        "status": "unmet",
+        "violation_count": 1,
+        "overlap_area_m2": 0.4634487720722551,
+        "primary_overlap_area_m2": 0.4634487720722551,
+        "route_checks": 18,
+        "failed_route_checks": 0,
+        "issues": [
+          {
+            "kind": "exposure",
+            "scenario_id": "shelf:NORTH",
+            "source_key": "shelf",
+            "target_key": "bed",
+            "area_m2": 0.4634487720722551,
+            "primary": true
+          }
+        ],
+        "window_distances": [
+          {
+            "window_key": "window_1",
+            "target_key": "bed",
+            "distance_m": 0.75,
+            "penalty": 0.5714285714285714
+          },
+          {
+            "window_key": "window_1",
+            "target_key": "chair",
+            "distance_m": 2.6871133700192478,
+            "penalty": 0.2712148772346481
+          }
+        ],
+        "unassessed": []
+      },
+      "natural_cost": 37.63553881937489,
+      "mitigations": [
+        {
+          "key": "shelf",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "bed",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "table",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "tv_unit",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "chair",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "ceiling_light",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "window_1",
+          "kind": "window",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        }
+      ]
     },
     {
+      "evaluation_version": 2,
       "placements": [
         {
           "key": "shelf",
-          "gx": 0.9913150151071803,
-          "gy": 4.367179572128026,
-          "rotation": 3.034716014126847,
-          "placed": true
+          "gx": 7.898615345610073,
+          "gy": 9.794429772595906,
+          "rotation": 1.9671352087662526,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "bed",
           "gx": 4.0,
           "gy": 5.0,
           "rotation": 0.0,
-          "placed": true
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "table",
-          "gx": 3.777041551827763,
-          "gy": 0.7121264841984569,
-          "rotation": 0.03992716824203324,
-          "placed": true
+          "gx": 4.599502988375669,
+          "gy": 1.2838707124848583,
+          "rotation": 0.4353477463085506,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "tv_unit",
-          "gx": 8.033470123991842,
-          "gy": 0.19716218506296368,
-          "rotation": 0.19512076697439446,
-          "placed": true
+          "gx": 8.903676776896177,
+          "gy": 0.4024279695912765,
+          "rotation": 0.005778888202805588,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "chair",
-          "gx": 10.843254377919006,
-          "gy": 10.124410018710673,
-          "rotation": 0.049248101857056026,
-          "placed": true
+          "gx": 0.3357499185814199,
+          "gy": 0.863753931525888,
+          "rotation": 3.8202716843360127,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         },
         {
           "key": "ceiling_light",
-          "gx": 3.6602846248508363,
-          "gy": 4.735408627477492,
-          "rotation": 3.7054412921035706,
-          "placed": true
+          "gx": 6.343676058623258,
+          "gy": 1.1501985110789075,
+          "rotation": 3.088785132252408,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
         }
       ],
-      "cost": 1.2584986109750216,
+      "cost": 1035.8100432656097,
       "score_breakdown": [
         {
           "name": "clearance_violation",
-          "value": 0.00028867242130203863
+          "value": 17.877823817738204
         },
         {
           "name": "circulation_penalty",
-          "value": 0.0
+          "value": 14.3
         },
         {
           "name": "pairwise_distance_penalty",
-          "value": 0.21653822182358118
+          "value": 0.16102505403267164
         },
         {
           "name": "conversation_penalty",
@@ -231,21 +495,134 @@
         },
         {
           "name": "visual_balance_penalty",
-          "value": 0.041671716730138406
+          "value": 0.0
         },
         {
           "name": "alignment_penalty",
-          "value": 1.0
+          "value": 5.745687741572994
+        },
+        {
+          "name": "window_proximity_penalty",
+          "value": 0.8460106614461225
+        },
+        {
+          "name": "safety_violations",
+          "value": 1000.0
+        },
+        {
+          "name": "safety_overlap",
+          "value": 31.668260680967187
+        },
+        {
+          "name": "primary_overlap",
+          "value": 3.166826068096719
         }
       ],
       "violations": [
-        "Bed clearance overlaps occupied area (0.00 cell units squared)",
-        "TV Unit to Table distance 4.43 is outside [1, 4]",
-        "Bed is not anchored near a wall"
+        "Shelf clearance overlaps occupied area (2.22 cell units squared)",
+        "Bed clearance overlaps occupied area (2.34 cell units squared)",
+        "Bed clearance overlaps occupied area (3.02 cell units squared)",
+        "Table clearance overlaps occupied area (1.35 cell units squared)",
+        "17 free cells are unreachable from the exit",
+        "TV Unit to Table distance 4.32 is outside [1, 4]",
+        "Bed: preferred face is not aligned with a solid wall",
+        "exposure: shelf:NORTH -> bed"
       ],
       "valid": true,
-      "accepted_steps": 154,
-      "source_sample_index": 430
+      "accepted_steps": 355,
+      "source_sample_index": 820,
+      "safety": {
+        "status": "unmet",
+        "violation_count": 1,
+        "overlap_area_m2": 0.4634487720722551,
+        "primary_overlap_area_m2": 0.4634487720722551,
+        "route_checks": 18,
+        "failed_route_checks": 0,
+        "issues": [
+          {
+            "kind": "exposure",
+            "scenario_id": "shelf:NORTH",
+            "source_key": "shelf",
+            "target_key": "bed",
+            "area_m2": 0.4634487720722551,
+            "primary": true
+          }
+        ],
+        "window_distances": [
+          {
+            "window_key": "window_1",
+            "target_key": "bed",
+            "distance_m": 0.75,
+            "penalty": 0.5714285714285714
+          },
+          {
+            "window_key": "window_1",
+            "target_key": "chair",
+            "distance_m": 2.641898129393949,
+            "penalty": 0.274582090017551
+          }
+        ],
+        "unassessed": []
+      },
+      "natural_cost": 38.93054727478999,
+      "mitigations": [
+        {
+          "key": "shelf",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "bed",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "table",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "tv_unit",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "chair",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "ceiling_light",
+          "kind": "furniture",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        },
+        {
+          "key": "window_1",
+          "kind": "window",
+          "restraint": "unknown",
+          "installation_confirmed": false,
+          "film": "unknown",
+          "curtains": "unknown"
+        }
+      ]
     }
   ]
 }

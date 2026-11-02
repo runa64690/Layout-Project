@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from api import create_app, JobStore
-from api_contract import LayoutDTO, OptimizationDTO, optimize_payload
+from api_contract import LayoutDTO, PlacementDTO, OptimizationDTO, optimize_payload
 from design_models import FURNITURE_PRESETS, build_items_from_placements
 from layout_cost import evaluate_layout_cost, total_fall_hazard_overlap_cells
 from layout_service import evaluate_layout
@@ -138,7 +138,7 @@ def test_seeded_job_matches_direct_solver_and_preserves_input(client, layout):
             t = target.placements[p["key"]]
             assert (p["gx"], p["gy"], p["rotation"]) == (t.gx, t.gy, t.rotation)
             if p["key"] == "bed":
-                assert p == layout["placements"][1]
+                assert p == PlacementDTO.model_validate(layout["placements"][1]).model_dump()
     assert before == body
 
 

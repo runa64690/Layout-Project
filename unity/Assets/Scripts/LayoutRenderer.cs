@@ -139,7 +139,6 @@ namespace FurnitureLayout
             }
             root.transform.position = GridCoordinates.BottomCenter(p,d,state.Data.room,cell);
             root.transform.rotation = GridCoordinates.Rotation(p.rotation);
-            Box(root.transform, new Vector3(0,dimensions.y+.008f,dimensions.z*.38f), new Vector3(dimensions.x*.35f,.016f,dimensions.z*.14f), Color.white);
             if (interactive && p.key == SelectedKey)
                 Box(root.transform, new Vector3(0,dimensions.y+.021f,0), new Vector3(dimensions.x+.025f,.012f,.02f), Color.cyan);
             return root;
@@ -239,7 +238,7 @@ namespace FurnitureLayout
             float cell = state.Catalog.cell_size_m;
             foreach (var r in regions)
             {
-                Color color = r.kind == "fall" ? new Color(.94f,.48f,.35f) : r.kind == "door_front" ? new Color(.35f,.74f,.55f) : new Color(.43f,.65f,.92f);
+                Color color = r.kind == "fall" || r.kind == "drop" ? new Color(.94f,.48f,.35f) : r.kind == "door_front" ? new Color(.35f,.74f,.55f) : new Color(.43f,.65f,.92f);
                 var points = r.points;
                 if (points == null || points.Length < 3) points = new[] {
                     new RegionPoint {x=r.x0,y=r.y0}, new RegionPoint {x=r.x1,y=r.y0},

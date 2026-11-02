@@ -18,6 +18,8 @@ namespace FurnitureLayout
         public int schema_version;
         public float cell_size_m;
         public bool continuous_placement;
+        public int evaluation_version;
+        public string[] capabilities;
         public FurnitureDefinition[] furniture;
         public FurnitureDefinition Find(string key) => Array.Find(furniture, p => p.key == key);
     }
@@ -26,19 +28,22 @@ namespace FurnitureLayout
         public string key, label, wall;
         public int offset, length = 2;
         public bool placed = true;
+        public string film = "unknown", curtains = "unknown";
     }
     [Serializable] public class RoomData
     {
         public int grid_w = 12, grid_h = 12;
         public float ceiling_height_m = 2.5f;
-        public Opening[] doors = { new Opening { key = "door_1", label = "Door", wall = "LEFT", offset = 5 } };
-        public Opening[] windows = { new Opening { key = "window_1", label = "Window", wall = "TOP", offset = 5 } };
+        public Opening[] doors = { new Opening { key = "door_1", label = "ドア", wall = "LEFT", offset = 5 } };
+        public Opening[] windows = { new Opening { key = "window_1", label = "窓", wall = "TOP", offset = 5 } };
     }
     [Serializable] public class Placement
     {
         public string key;
         public float gx, gy, rotation;
         public bool placed;
+        public string restraint = "unknown";
+        public bool installation_confirmed;
         public Placement Copy() => (Placement)MemberwiseClone();
     }
     [Serializable] public class LayoutData
@@ -56,7 +61,40 @@ namespace FurnitureLayout
     }
     [Serializable] public class ScoreTerm { public string name; public float value; }
     [Serializable] public class RegionPoint { public float x, y; }
-    [Serializable] public class Region { public string kind, key; public float x0, y0, x1, y1; public RegionPoint[] points; }
+    [Serializable] public class Region
+    {
+        public string kind, key, scenario_id, direction;
+        public bool primary;
+        public float x0,y0,x1,y1;
+        public RegionPoint[] points;
+    }
+    [Serializable] public class SafetyIssue
+    {
+        public string kind, scenario_id, source_key, target_key;
+        public float area_m2;
+        public bool primary;
+    }
+    [Serializable] public class WindowDistance
+    {
+        public string window_key, target_key;
+        public float distance_m, penalty;
+    }
+    [Serializable] public class SafetyAssessment
+    {
+        public string status;
+        public int violation_count, route_checks, failed_route_checks;
+        public float overlap_area_m2, primary_overlap_area_m2;
+        public SafetyIssue[] issues;
+        public WindowDistance[] window_distances;
+        public string[] unassessed;
+        public string Summary => status=="met" ? "今回評価した条件を満たしています（安全を保証するものではありません）" :
+            status=="unmet" ? "評価条件が未達です：確認事項 "+violation_count+" 件" : "評価できていない条件があります";
+    }
+    [Serializable] public class Mitigation
+    {
+        public string key, kind, restraint, film, curtains;
+        public bool installation_confirmed;
+    }
     [Serializable] public class Evaluation
     {
         public int schema_version, revision;
@@ -65,6 +103,10 @@ namespace FurnitureLayout
         public ScoreTerm[] breakdown;
         public string[] violations;
         public Region[] regions;
+        public int evaluation_version;
+        public float natural_cost;
+        public SafetyAssessment safety;
+        public Mitigation[] mitigations;
     }
     [Serializable] public class Candidate
     {
@@ -73,6 +115,10 @@ namespace FurnitureLayout
         public ScoreTerm[] score_breakdown;
         public string[] violations;
         public bool valid;
+        public int evaluation_version;
+        public float natural_cost;
+        public SafetyAssessment safety;
+        public Mitigation[] mitigations;
         public int accepted_steps, source_sample_index;
     }
     [Serializable] public class OptimizationJob

@@ -25,13 +25,20 @@ namespace FurnitureLayout
                 yield return request.SendWebRequest();
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    failed($"HTTP {request.responseCode}: {request.error}\n{request.downloadHandler.text}");
+                    Debug.LogWarning($"HTTP {request.responseCode}: {request.error}\n{request.downloadHandler.text}");
+                    if (request.responseCode==0)
+                        failed("サーバーに接続できません。APIの起動と接続先、ネットワークを確認してください。");
+                    else if (request.responseCode==404)
+                        failed("接続先または探索結果が見つかりません。結果が期限切れの場合は再探索してください。");
+                    else if (request.responseCode==503)
+                        failed("サーバーが混み合っています。しばらく待ってから再実行してください。");
+                    else failed(LayoutJapanese.ServerError(request.downloadHandler.text)+$"（HTTP {request.responseCode}）");
                     yield break;
                 }
                 T result;
                 try { result = JsonUtility.FromJson<T>(request.downloadHandler.text); }
-                catch (Exception e) { failed("Invalid server response: " + e.Message); yield break; }
-                if (result == null) { failed("Empty server response"); yield break; }
+                catch (Exception e) { Debug.LogWarning(e); failed("サーバーの応答を読み取れませんでした。接続先とAPIの版を確認してください。"); yield break; }
+                if (result == null) { failed("サーバーから空の応答が返されました。再実行してください。"); yield break; }
                 done(result);
             }
         }

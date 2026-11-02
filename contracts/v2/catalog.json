@@ -1,0 +1,142 @@
+{
+  "schema_version": 2,
+  "evaluation_version": 3,
+  "tatami_m2": 1.62,
+  "capabilities": [
+    "polygon_rooms",
+    "arbitrary_wall_angles",
+    "continuous_placement",
+    "safety_scenarios"
+  ],
+  "furniture": [
+    {
+      "key": "shelf",
+      "label": "本棚",
+      "gw": 4,
+      "gd": 2,
+      "h_cell": 7,
+      "furniture_type": "STORAGE",
+      "fall_dir": "NORTH",
+      "pillow_side": null,
+      "clearance": {
+        "min_cells": 2,
+        "mode": "front"
+      },
+      "pairwise_rules": [],
+      "conversation_seat": false,
+      "ceiling_mounted": false,
+      "model_id": "shelf",
+      "width_m": 1.0,
+      "depth_m": 0.5,
+      "height_m": 1.75
+    },
+    {
+      "key": "bed",
+      "label": "ベッド",
+      "gw": 6,
+      "gd": 4,
+      "h_cell": 3,
+      "furniture_type": "BED",
+      "fall_dir": null,
+      "pillow_side": "WEST",
+      "clearance": {
+        "min_cells": 2,
+        "mode": "side"
+      },
+      "pairwise_rules": [],
+      "conversation_seat": false,
+      "ceiling_mounted": false,
+      "model_id": "bed",
+      "width_m": 1.5,
+      "depth_m": 1.0,
+      "height_m": 0.75
+    },
+    {
+      "key": "table",
+      "label": "テーブル",
+      "gw": 3,
+      "gd": 2,
+      "h_cell": 3,
+      "furniture_type": "TABLE",
+      "fall_dir": null,
+      "pillow_side": null,
+      "clearance": {
+        "min_cells": 1,
+        "mode": "all"
+      },
+      "pairwise_rules": [],
+      "conversation_seat": false,
+      "ceiling_mounted": false,
+      "model_id": "table",
+      "width_m": 0.75,
+      "depth_m": 0.5,
+      "height_m": 0.75
+    },
+    {
+      "key": "tv_unit",
+      "label": "テレビ台",
+      "gw": 3,
+      "gd": 2,
+      "h_cell": 2,
+      "furniture_type": "TV_STAND",
+      "fall_dir": "NORTH",
+      "pillow_side": null,
+      "clearance": {
+        "min_cells": 1,
+        "mode": "front"
+      },
+      "pairwise_rules": [
+        {
+          "other_key": "table",
+          "min_distance_cells": 1,
+          "max_distance_cells": 4
+        }
+      ],
+      "conversation_seat": false,
+      "ceiling_mounted": false,
+      "model_id": "tv_unit",
+      "width_m": 0.75,
+      "depth_m": 0.5,
+      "height_m": 0.5
+    },
+    {
+      "key": "chair",
+      "label": "椅子",
+      "gw": 1,
+      "gd": 1,
+      "h_cell": 2,
+      "furniture_type": "SEAT",
+      "fall_dir": null,
+      "pillow_side": null,
+      "clearance": {
+        "min_cells": 1,
+        "mode": "front"
+      },
+      "pairwise_rules": [],
+      "conversation_seat": true,
+      "ceiling_mounted": false,
+      "model_id": "chair",
+      "width_m": 0.25,
+      "depth_m": 0.25,
+      "height_m": 0.5
+    },
+    {
+      "key": "ceiling_light",
+      "label": "天井照明",
+      "gw": 2,
+      "gd": 2,
+      "h_cell": 1,
+      "furniture_type": "CEILING_LIGHT",
+      "fall_dir": null,
+      "pillow_side": null,
+      "clearance": null,
+      "pairwise_rules": [],
+      "conversation_seat": false,
+      "ceiling_mounted": true,
+      "model_id": "ceiling_light",
+      "width_m": 0.5,
+      "depth_m": 0.5,
+      "height_m": 0.25
+    }
+  ]
+}

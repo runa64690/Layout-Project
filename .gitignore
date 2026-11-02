@@ -19,3 +19,33 @@ procthor_work/cache/
 procthor_work/*.json
 procthor_work/*.jsonl
 procthor_work/*.jsonl.gz
+
+# Kenney download package: local reference assets, alternate formats and previews.
+# Keep the license/docs under version control.
+/assets/kenney/furniture-kit/source/
+/assets/kenney/furniture-kit/*.zip
+
+# 3D models are kept locally, not on GitHub.
+# *.meta, prefabs and ModelLibrary.asset stay tracked so GUID references survive.
+*.fbx
+*.glb
+*.gltf
+*.obj
+*.mtl
+*.blend
+*.blend1
+*.dae
+*.3ds
+*.stl
+*.usd
+*.usda
+*.usdc
+*.usdz
+# Unused room scene with its textures (133 MB).
+/unity/Assets/Models/CozyLivingRoom/
+/unity/Assets/Models/CozyLivingRoom.meta
+
+# Local secrets
+.env
+.env.*
+!.env.example

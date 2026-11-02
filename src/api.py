@@ -35,12 +35,14 @@ class JobRecord:
 
 
 class JobStore:
-    def __init__(self, executor, capacity=32, ttl_seconds=3600):
+    def __init__(self, executor, capacity=32, ttl_seconds=3600, *, worker=optimize_payload, job_model=JobDTO):
         self.executor = executor
         self.capacity = capacity
         self.ttl_seconds = ttl_seconds
         self.records: dict[str, JobRecord] = {}
         self.lock = Lock()
+        self.worker = worker
+        self.job_model = job_model
 
     def _prune(self):
         now = time.monotonic()
@@ -62,12 +64,12 @@ class JobStore:
                     raise HTTPException(503, "Job capacity reached; retry later", headers={"Retry-After": "30"})
             job_id = uuid4().hex
             try:
-                future = self.executor.submit(optimize_payload, request.model_dump())
+                future = self.executor.submit(self.worker, request.model_dump())
             except RuntimeError as exc:
                 logger.exception("Cannot submit optimization")
                 raise HTTPException(503, "Optimization worker unavailable") from exc
             self.records[job_id] = JobRecord(request.layout.revision, future)
-            return JobDTO(id=job_id, revision=request.layout.revision, status="queued")
+            return self.job_model(id=job_id, revision=request.layout.revision, status="queued")
 
     def get(self, job_id):
         with self.lock:
@@ -76,10 +78,10 @@ class JobStore:
             if record is None:
                 raise HTTPException(404, "Job not found or expired; submit again")
             future = record.future
-            result = JobDTO(id=job_id, revision=record.revision, status="running" if future.running() else "queued")
+            result = self.job_model(id=job_id, revision=record.revision, status="running" if future.running() else "queued")
             if future.done():
                 try:
-                    result = JobDTO(id=job_id, revision=record.revision, status="succeeded", candidates=future.result())
+                    result = self.job_model(id=job_id, revision=record.revision, status="succeeded", candidates=future.result())
                 except Exception:
                     logger.exception("Optimization job %s failed", job_id)
                     result.status = "failed"
@@ -93,6 +95,8 @@ def create_app(executor_factory=None, *, cors_origins=None):
         executor = (executor_factory() if executor_factory else ProcessPoolExecutor(
             max_workers=2, mp_context=multiprocessing.get_context("spawn")))
         application.state.jobs = JobStore(executor)
+        from api_v2 import JobV2, optimize_v2
+        application.state.polygon_jobs = JobStore(executor, worker=optimize_v2, job_model=JobV2)
         try:
             yield
         finally:
@@ -131,6 +135,8 @@ def create_app(executor_factory=None, *, cors_origins=None):
     def job(job_id: str):
         return application.state.jobs.get(job_id)
 
+    from api_v2 import register_v2
+    register_v2(application)
     return application
 
 

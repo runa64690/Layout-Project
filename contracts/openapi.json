@@ -141,6 +141,11 @@
     "schemas": {
       "CandidateDTO": {
         "properties": {
+          "evaluation_version": {
+            "type": "integer",
+            "title": "Evaluation Version",
+            "default": 2
+          },
           "placements": {
             "items": {
               "$ref": "#/components/schemas/PlacementDTO"
@@ -177,6 +182,20 @@
           "source_sample_index": {
             "type": "integer",
             "title": "Source Sample Index"
+          },
+          "safety": {
+            "$ref": "#/components/schemas/SafetyDTO"
+          },
+          "natural_cost": {
+            "type": "number",
+            "title": "Natural Cost"
+          },
+          "mitigations": {
+            "items": {
+              "$ref": "#/components/schemas/MitigationDTO"
+            },
+            "type": "array",
+            "title": "Mitigations"
           }
         },
         "additionalProperties": false,
@@ -188,7 +207,10 @@
           "violations",
           "valid",
           "accepted_steps",
-          "source_sample_index"
+          "source_sample_index",
+          "safety",
+          "natural_cost",
+          "mitigations"
         ],
         "title": "CandidateDTO"
       },
@@ -199,6 +221,11 @@
             "const": 1,
             "title": "Schema Version",
             "default": 1
+          },
+          "evaluation_version": {
+            "type": "integer",
+            "title": "Evaluation Version",
+            "default": 2
           },
           "revision": {
             "type": "integer",
@@ -232,6 +259,20 @@
             },
             "type": "array",
             "title": "Regions"
+          },
+          "safety": {
+            "$ref": "#/components/schemas/SafetyDTO"
+          },
+          "natural_cost": {
+            "type": "number",
+            "title": "Natural Cost"
+          },
+          "mitigations": {
+            "items": {
+              "$ref": "#/components/schemas/MitigationDTO"
+            },
+            "type": "array",
+            "title": "Mitigations"
           }
         },
         "additionalProperties": false,
@@ -242,7 +283,10 @@
           "breakdown",
           "violations",
           "fall_overlap_cells",
-          "regions"
+          "regions",
+          "safety",
+          "natural_cost",
+          "mitigations"
         ],
         "title": "EvaluationDTO"
       },
@@ -349,6 +393,68 @@
         ],
         "title": "LayoutDTO"
       },
+      "MitigationDTO": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "furniture",
+              "window"
+            ],
+            "title": "Kind"
+          },
+          "restraint": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "wall_bracket",
+              "belt",
+              "pole",
+              "pole_combination",
+              "other"
+            ],
+            "title": "Restraint",
+            "default": "unknown"
+          },
+          "installation_confirmed": {
+            "type": "boolean",
+            "title": "Installation Confirmed",
+            "default": false
+          },
+          "film": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "present"
+            ],
+            "title": "Film",
+            "default": "unknown"
+          },
+          "curtains": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "present"
+            ],
+            "title": "Curtains",
+            "default": "unknown"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "kind"
+        ],
+        "title": "MitigationDTO"
+      },
       "OpeningDTO": {
         "properties": {
           "key": {
@@ -389,6 +495,26 @@
             "type": "boolean",
             "title": "Placed",
             "default": true
+          },
+          "film": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "present"
+            ],
+            "title": "Film",
+            "default": "unknown"
+          },
+          "curtains": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "present"
+            ],
+            "title": "Curtains",
+            "default": "unknown"
           }
         },
         "additionalProperties": false,
@@ -497,6 +623,25 @@
             "type": "boolean",
             "title": "Placed",
             "default": false
+          },
+          "restraint": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "wall_bracket",
+              "belt",
+              "pole",
+              "pole_combination",
+              "other"
+            ],
+            "title": "Restraint",
+            "default": "unknown"
+          },
+          "installation_confirmed": {
+            "type": "boolean",
+            "title": "Installation Confirmed",
+            "default": false
           }
         },
         "additionalProperties": false,
@@ -557,6 +702,21 @@
             },
             "type": "array",
             "title": "Points"
+          },
+          "scenario_id": {
+            "type": "string",
+            "title": "Scenario Id",
+            "default": ""
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction",
+            "default": ""
+          },
+          "primary": {
+            "type": "boolean",
+            "title": "Primary",
+            "default": false
           }
         },
         "additionalProperties": false,
@@ -618,6 +778,112 @@
         ],
         "title": "RoomDTO"
       },
+      "SafetyDTO": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "met",
+              "unmet",
+              "not_evaluated"
+            ],
+            "title": "Status"
+          },
+          "violation_count": {
+            "type": "integer",
+            "title": "Violation Count"
+          },
+          "overlap_area_m2": {
+            "type": "number",
+            "title": "Overlap Area M2"
+          },
+          "primary_overlap_area_m2": {
+            "type": "number",
+            "title": "Primary Overlap Area M2"
+          },
+          "route_checks": {
+            "type": "integer",
+            "title": "Route Checks"
+          },
+          "failed_route_checks": {
+            "type": "integer",
+            "title": "Failed Route Checks"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/SafetyIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "window_distances": {
+            "items": {
+              "$ref": "#/components/schemas/WindowDistance"
+            },
+            "type": "array",
+            "title": "Window Distances"
+          },
+          "unassessed": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unassessed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "violation_count",
+          "overlap_area_m2",
+          "primary_overlap_area_m2",
+          "route_checks",
+          "failed_route_checks",
+          "issues",
+          "window_distances",
+          "unassessed"
+        ],
+        "title": "SafetyDTO"
+      },
+      "SafetyIssue": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "scenario_id": {
+            "type": "string",
+            "title": "Scenario Id"
+          },
+          "source_key": {
+            "type": "string",
+            "title": "Source Key"
+          },
+          "target_key": {
+            "type": "string",
+            "title": "Target Key"
+          },
+          "area_m2": {
+            "type": "number",
+            "title": "Area M2",
+            "default": 0.0
+          },
+          "primary": {
+            "type": "boolean",
+            "title": "Primary",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "scenario_id",
+          "source_key",
+          "target_key"
+        ],
+        "title": "SafetyIssue"
+      },
       "ScoreTerm": {
         "properties": {
           "name": {
@@ -676,6 +942,34 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WindowDistance": {
+        "properties": {
+          "window_key": {
+            "type": "string",
+            "title": "Window Key"
+          },
+          "target_key": {
+            "type": "string",
+            "title": "Target Key"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "penalty": {
+            "type": "number",
+            "title": "Penalty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window_key",
+          "target_key",
+          "distance_m",
+          "penalty"
+        ],
+        "title": "WindowDistance"
       }
     }
   }

@@ -1,0 +1,208 @@
+{
+  "schema_version": 2,
+  "evaluation_version": 3,
+  "revision": 1,
+  "area_m2": 12.0,
+  "tatami": 7.4074074074074066,
+  "total": 0.6794871794871795,
+  "breakdown": [
+    {
+      "name": "clearance_violation",
+      "value": 0.0
+    },
+    {
+      "name": "circulation_penalty",
+      "value": 0.0
+    },
+    {
+      "name": "pairwise_distance_penalty",
+      "value": 0.0
+    },
+    {
+      "name": "conversation_penalty",
+      "value": 0.0
+    },
+    {
+      "name": "visual_balance_penalty",
+      "value": 0.0
+    },
+    {
+      "name": "alignment_penalty",
+      "value": 2.12
+    },
+    {
+      "name": "window_proximity_penalty",
+      "value": 0.0
+    },
+    {
+      "name": "safety_violations",
+      "value": 0.0
+    },
+    {
+      "name": "safety_overlap",
+      "value": 0.0
+    },
+    {
+      "name": "primary_overlap",
+      "value": 0.0
+    }
+  ],
+  "violations": [
+    "Shelf: preferred face is not aligned with a solid wall"
+  ],
+  "safety": {
+    "status": "met",
+    "violation_count": 0,
+    "overlap_area_m2": 0.0,
+    "primary_overlap_area_m2": 0.0,
+    "route_checks": 5,
+    "failed_route_checks": 0,
+    "issues": [],
+    "window_distances": [],
+    "unassessed": []
+  },
+  "natural_cost": 2.12,
+  "mitigations": [
+    {
+      "key": "chair",
+      "kind": "furniture",
+      "restraint": "unknown",
+      "installation_confirmed": false,
+      "film": "unknown",
+      "curtains": "unknown"
+    },
+    {
+      "key": "shelf",
+      "kind": "furniture",
+      "restraint": "unknown",
+      "installation_confirmed": false,
+      "film": "unknown",
+      "curtains": "unknown"
+    }
+  ],
+  "regions": [
+    {
+      "kind": "fall",
+      "key": "shelf",
+      "scenario_id": "shelf:NORTH",
+      "primary": true,
+      "points": [
+        {
+          "x": 3.3,
+          "y": 1.05
+        },
+        {
+          "x": 2.3,
+          "y": 1.05
+        },
+        {
+          "x": 2.3,
+          "y": 2.0
+        },
+        {
+          "x": 3.3,
+          "y": 2.0
+        }
+      ]
+    },
+    {
+      "kind": "fall",
+      "key": "shelf",
+      "scenario_id": "shelf:EAST",
+      "primary": false,
+      "points": [
+        {
+          "x": 3.3,
+          "y": 0.55
+        },
+        {
+          "x": 3.3,
+          "y": 1.05
+        },
+        {
+          "x": 4.0,
+          "y": 1.05
+        },
+        {
+          "x": 4.0,
+          "y": 0.55
+        }
+      ]
+    },
+    {
+      "kind": "fall",
+      "key": "shelf",
+      "scenario_id": "shelf:SOUTH",
+      "primary": false,
+      "points": [
+        {
+          "x": 2.3,
+          "y": 0.55
+        },
+        {
+          "x": 3.3,
+          "y": 0.55
+        },
+        {
+          "x": 3.3,
+          "y": 0.0
+        },
+        {
+          "x": 2.3,
+          "y": 0.0
+        }
+      ]
+    },
+    {
+      "kind": "fall",
+      "key": "shelf",
+      "scenario_id": "shelf:WEST",
+      "primary": false,
+      "points": [
+        {
+          "x": 0.5499999999999998,
+          "y": 1.05
+        },
+        {
+          "x": 2.3,
+          "y": 1.05
+        },
+        {
+          "x": 2.3,
+          "y": 0.55
+        },
+        {
+          "x": 0.5499999999999998,
+          "y": 0.55
+        }
+      ]
+    },
+    {
+      "kind": "door_front",
+      "key": "door_1",
+      "scenario_id": "",
+      "primary": false,
+      "points": [
+        {
+          "x": 0.2,
+          "y": 0.0
+        },
+        {
+          "x": 0.2,
+          "y": 0.5
+        },
+        {
+          "x": 1.0,
+          "y": 0.5
+        },
+        {
+          "x": 1.0,
+          "y": 0.0
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "避難経路は25cm格子による近似です。細い通路や斜めの境界では到達不能と判定される場合があります。"
+  ]
+}

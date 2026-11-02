@@ -1,0 +1,123 @@
+{
+  "schema_version": 2,
+  "id": "example-job",
+  "revision": 1,
+  "status": "succeeded",
+  "error": null,
+  "candidates": [
+    {
+      "evaluation_version": 3,
+      "placements": [
+        {
+          "key": "chair",
+          "x_m": 0.5,
+          "y_m": 2.5,
+          "rotation_deg": 23.0,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
+        },
+        {
+          "key": "shelf",
+          "x_m": 2.8,
+          "y_m": 0.27,
+          "rotation_deg": 0.0,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
+        }
+      ],
+      "cost": 6.938893903907228e-17,
+      "valid": true,
+      "safety": {
+        "status": "met",
+        "violation_count": 0,
+        "overlap_area_m2": 0.0,
+        "primary_overlap_area_m2": 0.0,
+        "route_checks": 4,
+        "failed_route_checks": 0,
+        "issues": [],
+        "window_distances": [],
+        "unassessed": []
+      },
+      "natural_cost": 6.938893903907228e-17,
+      "violations": []
+    },
+    {
+      "evaluation_version": 3,
+      "placements": [
+        {
+          "key": "chair",
+          "x_m": 0.5,
+          "y_m": 2.5,
+          "rotation_deg": 23.0,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
+        },
+        {
+          "key": "shelf",
+          "x_m": 3.2437795342800375,
+          "y_m": 0.27,
+          "rotation_deg": 0.0,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
+        }
+      ],
+      "cost": 6.938893903907228e-17,
+      "valid": true,
+      "safety": {
+        "status": "met",
+        "violation_count": 0,
+        "overlap_area_m2": 0.0,
+        "primary_overlap_area_m2": 0.0,
+        "route_checks": 4,
+        "failed_route_checks": 0,
+        "issues": [],
+        "window_distances": [],
+        "unassessed": []
+      },
+      "natural_cost": 6.938893903907228e-17,
+      "violations": []
+    },
+    {
+      "evaluation_version": 3,
+      "placements": [
+        {
+          "key": "chair",
+          "x_m": 0.5,
+          "y_m": 2.5,
+          "rotation_deg": 23.0,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
+        },
+        {
+          "key": "shelf",
+          "x_m": 3.1678678691850206,
+          "y_m": 0.27,
+          "rotation_deg": 0.0,
+          "placed": true,
+          "restraint": "unknown",
+          "installation_confirmed": false
+        }
+      ],
+      "cost": 6.938893903907228e-17,
+      "valid": true,
+      "safety": {
+        "status": "met",
+        "violation_count": 0,
+        "overlap_area_m2": 0.0,
+        "primary_overlap_area_m2": 0.0,
+        "route_checks": 4,
+        "failed_route_checks": 0,
+        "issues": [],
+        "window_distances": [],
+        "unassessed": []
+      },
+      "natural_cost": 6.938893903907228e-17,
+      "violations": []
+    }
+  ]
+}

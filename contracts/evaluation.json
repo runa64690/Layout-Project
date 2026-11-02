@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
+  "evaluation_version": 2,
   "revision": 1,
-  "total": 13.139940386025561,
+  "total": 2045.8221975291442,
   "breakdown": [
     {
       "name": "clearance_violation",
@@ -21,17 +22,36 @@
     },
     {
       "name": "visual_balance_penalty",
-      "value": 0.13994038602556064
+      "value": 0.0
     },
     {
       "name": "alignment_penalty",
-      "value": 1.0
+      "value": 14.76
+    },
+    {
+      "name": "window_proximity_penalty",
+      "value": 0.8561286006577897
+    },
+    {
+      "name": "safety_violations",
+      "value": 2000.0
+    },
+    {
+      "name": "safety_overlap",
+      "value": 42.857142857142854
+    },
+    {
+      "name": "primary_overlap",
+      "value": 2.0
     }
   ],
   "violations": [
     "Bed clearance overlaps occupied area (4.00 cell units squared)",
     "Table clearance overlaps occupied area (2.00 cell units squared)",
-    "Bed is not anchored near a wall"
+    "Shelf: preferred face is not aligned with a solid wall",
+    "Bed: preferred face is not aligned with a solid wall",
+    "exposure: shelf:SOUTH -> bed",
+    "exposure: ceiling_light:drop -> bed"
   ],
   "fall_overlap_cells": 0.0,
   "regions": [
@@ -41,51 +61,86 @@
       "x0": 8.0,
       "y0": 11.0,
       "x1": 12.0,
-      "y1": 18.0,
+      "y1": 12.0,
       "points": [
         {
           "x": 8.0,
-          "y": 11.0
-        },
-        {
-          "x": 12.0,
-          "y": 11.0
-        },
-        {
-          "x": 12.0,
-          "y": 18.0
+          "y": 12.0
         },
         {
           "x": 8.0,
-          "y": 18.0
+          "y": 11.0
+        },
+        {
+          "x": 12.0,
+          "y": 11.0
+        },
+        {
+          "x": 12.0,
+          "y": 12.0
         }
-      ]
+      ],
+      "scenario_id": "shelf:NORTH",
+      "direction": "NORTH",
+      "primary": true
     },
     {
-      "kind": "bed_head",
-      "key": "bed",
-      "x0": 2.0,
-      "y0": 5.0,
-      "x1": 4.0,
+      "kind": "fall",
+      "key": "shelf",
+      "x0": 8.0,
+      "y0": 2.0,
+      "x1": 12.0,
       "y1": 9.0,
       "points": [
         {
-          "x": 2.0,
-          "y": 5.0
+          "x": 8.0,
+          "y": 2.0
         },
         {
-          "x": 4.0,
-          "y": 5.0
+          "x": 12.0,
+          "y": 2.0
         },
         {
-          "x": 4.0,
+          "x": 12.0,
           "y": 9.0
         },
         {
-          "x": 2.0,
+          "x": 8.0,
           "y": 9.0
         }
-      ]
+      ],
+      "scenario_id": "shelf:SOUTH",
+      "direction": "SOUTH",
+      "primary": false
+    },
+    {
+      "kind": "fall",
+      "key": "shelf",
+      "x0": 1.0,
+      "y0": 9.0,
+      "x1": 8.0,
+      "y1": 11.0,
+      "points": [
+        {
+          "x": 1.0,
+          "y": 9.0
+        },
+        {
+          "x": 8.0,
+          "y": 9.0
+        },
+        {
+          "x": 8.0,
+          "y": 11.0
+        },
+        {
+          "x": 1.0,
+          "y": 11.0
+        }
+      ],
+      "scenario_id": "shelf:WEST",
+      "direction": "WEST",
+      "primary": false
     },
     {
       "kind": "fall",
@@ -111,59 +166,284 @@
           "x": 8.0,
           "y": 5.0
         }
-      ]
+      ],
+      "scenario_id": "tv_unit:NORTH",
+      "direction": "NORTH",
+      "primary": true
+    },
+    {
+      "kind": "fall",
+      "key": "tv_unit",
+      "x0": 11.0,
+      "y0": 1.0,
+      "x1": 12.0,
+      "y1": 3.0,
+      "points": [
+        {
+          "x": 11.0,
+          "y": 1.0
+        },
+        {
+          "x": 12.0,
+          "y": 1.0
+        },
+        {
+          "x": 12.0,
+          "y": 3.0
+        },
+        {
+          "x": 11.0,
+          "y": 3.0
+        }
+      ],
+      "scenario_id": "tv_unit:EAST",
+      "direction": "EAST",
+      "primary": false
+    },
+    {
+      "kind": "fall",
+      "key": "tv_unit",
+      "x0": 8.0,
+      "y0": 0.0,
+      "x1": 11.0,
+      "y1": 1.0,
+      "points": [
+        {
+          "x": 8.0,
+          "y": 0.0
+        },
+        {
+          "x": 11.0,
+          "y": 0.0
+        },
+        {
+          "x": 11.0,
+          "y": 1.0
+        },
+        {
+          "x": 8.0,
+          "y": 1.0
+        }
+      ],
+      "scenario_id": "tv_unit:SOUTH",
+      "direction": "SOUTH",
+      "primary": false
+    },
+    {
+      "kind": "fall",
+      "key": "tv_unit",
+      "x0": 6.0,
+      "y0": 1.0,
+      "x1": 8.0,
+      "y1": 3.0,
+      "points": [
+        {
+          "x": 6.0,
+          "y": 1.0
+        },
+        {
+          "x": 8.0,
+          "y": 1.0
+        },
+        {
+          "x": 8.0,
+          "y": 3.0
+        },
+        {
+          "x": 6.0,
+          "y": 3.0
+        }
+      ],
+      "scenario_id": "tv_unit:WEST",
+      "direction": "WEST",
+      "primary": false
+    },
+    {
+      "kind": "drop",
+      "key": "ceiling_light",
+      "x0": 5.0,
+      "y0": 5.0,
+      "x1": 7.0,
+      "y1": 7.0,
+      "points": [
+        {
+          "x": 5.0,
+          "y": 5.0
+        },
+        {
+          "x": 7.0,
+          "y": 5.0
+        },
+        {
+          "x": 7.0,
+          "y": 7.0
+        },
+        {
+          "x": 5.0,
+          "y": 7.0
+        }
+      ],
+      "scenario_id": "ceiling_light:drop",
+      "direction": "DOWN",
+      "primary": true
+    },
+    {
+      "kind": "bed_head",
+      "key": "bed",
+      "x0": 4.0,
+      "y0": 5.0,
+      "x1": 6.0,
+      "y1": 9.0,
+      "points": [
+        {
+          "x": 4.0,
+          "y": 5.0
+        },
+        {
+          "x": 6.0,
+          "y": 5.0
+        },
+        {
+          "x": 6.0,
+          "y": 9.0
+        },
+        {
+          "x": 4.0,
+          "y": 9.0
+        }
+      ],
+      "scenario_id": "",
+      "direction": "",
+      "primary": false
     },
     {
       "kind": "door_front",
       "key": "door_1",
       "x0": 0.0,
-      "y0": 4.0,
+      "y0": 5.0,
       "x1": 2.0,
-      "y1": 8.0,
+      "y1": 7.0,
       "points": [
         {
           "x": 0.0,
-          "y": 4.0
+          "y": 5.0
         },
         {
           "x": 2.0,
-          "y": 4.0
+          "y": 5.0
         },
         {
           "x": 2.0,
-          "y": 8.0
+          "y": 7.0
         },
         {
           "x": 0.0,
-          "y": 8.0
+          "y": 7.0
         }
-      ]
+      ],
+      "scenario_id": "",
+      "direction": "",
+      "primary": false
+    }
+  ],
+  "safety": {
+    "status": "unmet",
+    "violation_count": 2,
+    "overlap_area_m2": 0.75,
+    "primary_overlap_area_m2": 0.25,
+    "route_checks": 18,
+    "failed_route_checks": 0,
+    "issues": [
+      {
+        "kind": "exposure",
+        "scenario_id": "shelf:SOUTH",
+        "source_key": "shelf",
+        "target_key": "bed",
+        "area_m2": 0.5,
+        "primary": false
+      },
+      {
+        "kind": "exposure",
+        "scenario_id": "ceiling_light:drop",
+        "source_key": "ceiling_light",
+        "target_key": "bed",
+        "area_m2": 0.25,
+        "primary": true
+      }
+    ],
+    "window_distances": [
+      {
+        "window_key": "window_1",
+        "target_key": "bed",
+        "distance_m": 0.75,
+        "penalty": 0.5714285714285714
+      },
+      {
+        "window_key": "window_1",
+        "target_key": "chair",
+        "distance_m": 2.5124689052802225,
+        "penalty": 0.2847000292292184
+      }
+    ],
+    "unassessed": []
+  },
+  "natural_cost": 27.616128600657788,
+  "mitigations": [
+    {
+      "key": "shelf",
+      "kind": "furniture",
+      "restraint": "unknown",
+      "installation_confirmed": false,
+      "film": "unknown",
+      "curtains": "unknown"
     },
     {
-      "kind": "window_scatter",
+      "key": "bed",
+      "kind": "furniture",
+      "restraint": "unknown",
+      "installation_confirmed": false,
+      "film": "unknown",
+      "curtains": "unknown"
+    },
+    {
+      "key": "table",
+      "kind": "furniture",
+      "restraint": "unknown",
+      "installation_confirmed": false,
+      "film": "unknown",
+      "curtains": "unknown"
+    },
+    {
+      "key": "tv_unit",
+      "kind": "furniture",
+      "restraint": "unknown",
+      "installation_confirmed": false,
+      "film": "unknown",
+      "curtains": "unknown"
+    },
+    {
+      "key": "chair",
+      "kind": "furniture",
+      "restraint": "unknown",
+      "installation_confirmed": false,
+      "film": "unknown",
+      "curtains": "unknown"
+    },
+    {
+      "key": "ceiling_light",
+      "kind": "furniture",
+      "restraint": "unknown",
+      "installation_confirmed": false,
+      "film": "unknown",
+      "curtains": "unknown"
+    },
+    {
       "key": "window_1",
-      "x0": 5.0,
-      "y0": 10.0,
-      "x1": 7.0,
-      "y1": 12.0,
-      "points": [
-        {
-          "x": 5.0,
-          "y": 10.0
-        },
-        {
-          "x": 7.0,
-          "y": 10.0
-        },
-        {
-          "x": 7.0,
-          "y": 12.0
-        },
-        {
-          "x": 5.0,
-          "y": 12.0
-        }
-      ]
+      "kind": "window",
+      "restraint": "unknown",
+      "installation_confirmed": false,
+      "film": "unknown",
+      "curtains": "unknown"
     }
   ]
 }

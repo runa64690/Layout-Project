@@ -70,6 +70,8 @@ class PlacedFurniture:
     gy: float | None = None
     rotation: float = 0
     placed: bool = False
+    restraint: str = "unknown"
+    installation_confirmed: bool = False
 
 
 @dataclass
@@ -80,6 +82,8 @@ class WallOpening:
     offset: int = 0
     length: int = 2
     placed: bool = False
+    film: str = "unknown"
+    curtains: str = "unknown"
 
 
 @dataclass
@@ -355,12 +359,15 @@ def clone_placements(placements: dict[str, PlacedFurniture]) -> dict[str, Placed
             gy=value.gy,
             rotation=value.rotation,
             placed=value.placed,
+            restraint=value.restraint,
+            installation_confirmed=value.installation_confirmed,
         )
         for key, value in placements.items()
     }
 
 
 def validate_layout(room: Room, items: list[Furniture]) -> None:
+    from layout_geometry import build_door_front_rect
     for index, item in enumerate(items):
         if not all(math.isfinite(v) for v in (item.gx, item.gy, item.gw, item.gd, item.rotation)):
             raise ValueError(f"{item.name}: non-finite geometry")
@@ -377,7 +384,11 @@ def validate_layout(room: Room, items: list[Furniture]) -> None:
         for other in items[:index]:
             if item.ceiling_mounted == other.ceiling_mounted and overlaps(polygon, other.footprint):
                 raise ValueError(f"Furniture overlap: {other.name} and {item.name}")
-        if not item.ceiling_mounted:
-            for x, y in room.door_anchor_cells():
-                if overlaps(polygon, rect_polygon((x, y, x+1, y+1))):
-                    raise ValueError(f"Door clearance blocked at cell={(x, y)} by {item.name}")
+        if not item.ceiling_mounted and not hasattr(room, "boundary"):
+            for door in room.doors:
+                rect = build_door_front_rect(room, door)
+                if rect and overlaps(polygon, rect_polygon(rect)):
+                    raise ValueError(f"Door clearance blocked: {door.key} by {item.name}")
+    if hasattr(room, "boundary"):
+        from polygon_room import validate_polygon_items
+        validate_polygon_items(room, items)

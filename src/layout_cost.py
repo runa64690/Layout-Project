@@ -3,7 +3,9 @@ from __future__ import annotations
 import math
 from spatial_geometry import bounds, intersection_area, occupied_cells, rect_polygon
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from layout_safety import SafetyAssessment, assess_safety, bed_head_polygon, polygon_cells
+from wall_alignment import alignment_cost
 from typing import Callable
 
 from design_models import (
@@ -21,8 +23,9 @@ DEFAULT_RULE_WEIGHTS = {
     "circulation_penalty": 1.5,
     "pairwise_distance_penalty": 2.0,
     "conversation_penalty": 2.0,
-    "visual_balance_penalty": 1.5,
+    "visual_balance_penalty": 0.0,
     "alignment_penalty": 1.0,
+    "window_proximity_penalty": 1.0,
 }
 
 
@@ -31,6 +34,12 @@ class LayoutScore:
     total: float
     breakdown: dict[str, float]
     violations: list[str]
+    safety: SafetyAssessment = field(default_factory=SafetyAssessment)
+    natural_cost: float = 0.0
+
+    @property
+    def rank(self):
+        return (*self.safety.priority, self.natural_cost)
 
 
 def clamp(value: float, lower: float, upper: float) -> float:
@@ -82,9 +91,7 @@ def build_fall_zone_polygon(item):
 
 
 def build_bed_head_zone_polygon(item):
-    if item.pillow_side is None:
-        raise ValueError(f"{item.name}: bed must have pillow_side")
-    return _side_zone(item, _local_direction(item, item.pillow_side, item.base_pillow_side), 2)
+    return bed_head_polygon(item)
 
 
 def build_fall_zone_rect(item):
@@ -125,7 +132,7 @@ def _build_occupancy(room: Room, items: list[Furniture]) -> list[list[bool]]:
     for item in items:
         if item.ceiling_mounted:
             continue
-        for x, y in occupied_cells(item.footprint):
+        for x, y in polygon_cells(item.footprint):
             if 0 <= x < room.grid_w and 0 <= y < room.grid_h:
                 grid[x][y] = True
     return grid
@@ -180,6 +187,8 @@ def score_circulation_penalty(room: Room, items: list[Furniture]) -> tuple[float
         for y in range(room.grid_h)
         if not occupied[x][y]
     }
+    if hasattr(room, "boundary"):
+        free_cells &= room.floor_cells
     if not free_cells:
         return 100.0, ["No free cells remain for circulation"]
 
@@ -293,10 +302,10 @@ def score_alignment_penalty(room: Room, items: list[Furniture]) -> tuple[float, 
     for item in items:
         if item.furniture_type not in {FurnitureType.STORAGE, FurnitureType.TV_STAND, FurnitureType.BED}:
             continue
-        wall_distance = _distance_to_nearest_wall(room, item)
-        if wall_distance > 1:
-            score += wall_distance - 1
-            violations.append(f"{item.name} is not anchored near a wall")
+        penalty = alignment_cost(room, item)
+        score += penalty
+        if penalty > 1:
+            violations.append(f"{item.name}: preferred face is not aligned with a solid wall")
     return score, violations
 
 
@@ -324,13 +333,30 @@ def evaluate_layout_cost(
     breakdown = {name: 0.0 for name in rule_funcs}
     violations: list[str] = []
     for name, func in rule_funcs.items():
-        if name not in active_terms:
+        if name not in active_terms or merged_weights.get(name, 1.0) == 0:
             continue
         raw_score, local_violations = func(room, items)
         weighted_score = raw_score * merged_weights.get(name, 1.0)
         breakdown[name] = weighted_score
         violations.extend(local_violations)
-    return LayoutScore(total=sum(breakdown.values()), breakdown=breakdown, violations=violations)
+    safety = assess_safety(room, items)
+    breakdown["window_proximity_penalty"] = sum(d.penalty for d in safety.window_distances) * merged_weights["window_proximity_penalty"]
+    natural = sum(breakdown.values())
+    # Bounded subordinate terms cannot compensate one discrete safety violation.
+    # Final candidate ordering additionally uses an exact lexicographic rank.
+    safety_cost = 1000.0 * safety.violation_count
+    area_cost = 100.0 * safety.overlap_area_m2 / (1+safety.overlap_area_m2)
+    primary_cost = 10.0 * safety.primary_overlap_area_m2 / (1+safety.primary_overlap_area_m2)
+    natural_energy = natural/(1+natural)
+    breakdown["safety_violations"] = safety_cost
+    breakdown["safety_overlap"] = area_cost
+    breakdown["primary_overlap"] = primary_cost
+    # Raw comfort components are retained above for interpretation. 'total' is
+    # search energy, not a sum of quantities with incompatible units.
+    violations.extend(f"{i.kind}: {i.scenario_id} -> {i.target_key}" for i in safety.issues)
+    violations.extend(safety.unassessed)
+    return LayoutScore(safety_cost+area_cost+primary_cost+natural_energy, breakdown,
+                       violations, safety, natural)
 
 
 def evaluate_layout_from_placements(

@@ -1,0 +1,187 @@
+{
+  "definition": {
+    "key": "bed",
+    "label": "ベッド",
+    "gw": 6,
+    "gd": 4,
+    "h_cell": 3,
+    "furniture_type": "BED",
+    "fall_dir": null,
+    "pillow_side": "WEST",
+    "clearance": {
+      "min_cells": 2,
+      "mode": "side"
+    },
+    "pairwise_rules": [],
+    "conversation_seat": false,
+    "ceiling_mounted": false,
+    "model_id": "bed",
+    "width_m": 1.5,
+    "depth_m": 1.0,
+    "height_m": 0.75
+  },
+  "room": {
+    "vertices": [
+      {
+        "id": "v0",
+        "x": 0,
+        "y": 0
+      },
+      {
+        "id": "v1",
+        "x": 6,
+        "y": 0
+      },
+      {
+        "id": "v2",
+        "x": 6,
+        "y": 6
+      },
+      {
+        "id": "v3",
+        "x": 0,
+        "y": 6
+      }
+    ],
+    "doors": [],
+    "windows": [],
+    "ceiling_height_m": 2.5
+  },
+  "cases": [
+    {
+      "placement": {
+        "key": "bed",
+        "x_m": 3,
+        "y_m": 3,
+        "rotation_deg": 0,
+        "placed": true
+      },
+      "head": [
+        {
+          "x": 2.25,
+          "y": 2.5
+        },
+        {
+          "x": 2.75,
+          "y": 2.5
+        },
+        {
+          "x": 2.75,
+          "y": 3.5
+        },
+        {
+          "x": 2.25,
+          "y": 3.5
+        }
+      ]
+    },
+    {
+      "placement": {
+        "key": "bed",
+        "x_m": 3,
+        "y_m": 3,
+        "rotation_deg": 90,
+        "placed": true
+      },
+      "head": [
+        {
+          "x": 2.5,
+          "y": 3.75
+        },
+        {
+          "x": 2.5,
+          "y": 3.25
+        },
+        {
+          "x": 3.5,
+          "y": 3.25
+        },
+        {
+          "x": 3.5,
+          "y": 3.75
+        }
+      ]
+    },
+    {
+      "placement": {
+        "key": "bed",
+        "x_m": 3,
+        "y_m": 3,
+        "rotation_deg": 180,
+        "placed": true
+      },
+      "head": [
+        {
+          "x": 3.75,
+          "y": 3.5
+        },
+        {
+          "x": 3.25,
+          "y": 3.5
+        },
+        {
+          "x": 3.25,
+          "y": 2.5
+        },
+        {
+          "x": 3.75,
+          "y": 2.5
+        }
+      ]
+    },
+    {
+      "placement": {
+        "key": "bed",
+        "x_m": 3,
+        "y_m": 3,
+        "rotation_deg": 270,
+        "placed": true
+      },
+      "head": [
+        {
+          "x": 3.5,
+          "y": 2.25
+        },
+        {
+          "x": 3.5,
+          "y": 2.75
+        },
+        {
+          "x": 2.5,
+          "y": 2.75
+        },
+        {
+          "x": 2.5,
+          "y": 2.25
+        }
+      ]
+    },
+    {
+      "placement": {
+        "key": "bed",
+        "x_m": 3,
+        "y_m": 3,
+        "rotation_deg": 37,
+        "placed": true
+      },
+      "head": [
+        {
+          "x": 2.100115855888506,
+          "y": 3.05204351234039
+        },
+        {
+          "x": 2.4994336109121527,
+          "y": 2.7511360007643653
+        },
+        {
+          "x": 3.101248634064201,
+          "y": 3.5497715108116585
+        },
+        {
+          "x": 2.7019308790405545,
+          "y": 3.8506790223876823
+        }
+      ]
+    }
+  ]
+}
