@@ -11,6 +11,10 @@ from design_models import (
     build_items_from_placements, validate_layout,
 )
 from layout_service import evaluate_layout, generate_candidates
+from layout_safety import EVALUATION_VERSION, SafetyIssue, WindowDistance
+
+Restraint = Literal["unknown", "none", "wall_bracket", "belt", "pole", "pole_combination", "other"]
+Protection = Literal["unknown", "none", "present"]
 
 
 class DTO(BaseModel):
@@ -24,6 +28,8 @@ class OpeningDTO(DTO):
     offset: int = Field(ge=0, le=64, strict=True)
     length: int = Field(ge=1, le=64, strict=True)
     placed: bool = True
+    film: Protection = "unknown"
+    curtains: Protection = "unknown"
 
 
 class RoomDTO(DTO):
@@ -56,10 +62,19 @@ class RoomDTO(DTO):
 
 class PlacementDTO(DTO):
     key: str = Field(min_length=1, max_length=64)
-    gx: int = Field(default=0, ge=-64, le=64, strict=True)
-    gy: int = Field(default=0, ge=-64, le=64, strict=True)
-    rotation: int = Field(default=0, ge=0, le=3, strict=True)
+    gx: float = Field(default=0, ge=-64, le=64, strict=True, allow_inf_nan=False)
+    gy: float = Field(default=0, ge=-64, le=64, strict=True, allow_inf_nan=False)
+    rotation: float = Field(default=0, ge=0, lt=4, strict=True, allow_inf_nan=False,
+                            description="Clockwise quarter turns, fractional values allowed (0.5 = 45 degrees)")
     placed: bool = False
+    restraint: Restraint = "unknown"
+    installation_confirmed: bool = False
+
+    @model_validator(mode="after")
+    def check_confirmation(self):
+        if self.installation_confirmed and (not self.placed or self.restraint in ("unknown", "none")):
+            raise ValueError("Installation confirmation requires placed furniture with a declared restraint")
+        return self
 
 
 class LayoutDTO(DTO):
@@ -82,7 +97,7 @@ class LayoutDTO(DTO):
         placements = {
             p.key: PlacedFurniture(p.key, FURNITURE_PRESETS[p.key].label,
                                    p.gx if p.placed else None, p.gy if p.placed else None,
-                                   p.rotation, p.placed)
+                                   p.rotation, p.placed, p.restraint, p.installation_confirmed)
             for p in self.placements
         }
         return self.room.to_domain(), placements
@@ -112,26 +127,72 @@ class ScoreTerm(DTO):
     value: float
 
 
+class PointDTO(DTO):
+    x: float
+    y: float
+
+
 class RegionDTO(DTO):
     kind: str
     key: str
-    x0: int
-    y0: int
-    x1: int
-    y1: int
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+    points: list[PointDTO]
+    scenario_id: str = ""
+    direction: str = ""
+    primary: bool = False
+
+
+class SafetyDTO(DTO):
+    status: Literal["met", "unmet", "not_evaluated"]
+    violation_count: int
+    overlap_area_m2: float
+    primary_overlap_area_m2: float
+    route_checks: int
+    failed_route_checks: int
+    issues: list[SafetyIssue]
+    window_distances: list[WindowDistance]
+    unassessed: list[str]
+
+
+class MitigationDTO(DTO):
+    key: str
+    kind: Literal["furniture", "window"]
+    restraint: Restraint = "unknown"
+    installation_confirmed: bool = False
+    film: Protection = "unknown"
+    curtains: Protection = "unknown"
+
+
+def safety_payload(safety):
+    return SafetyDTO(**{k: v for k, v in asdict(safety).items() if k != "scenarios"})
+
+
+def mitigation_payload(room, placements):
+    return ([MitigationDTO(key=p.key, kind="furniture", restraint=p.restraint,
+                           installation_confirmed=p.installation_confirmed) for p in placements.values()]
+            + [MitigationDTO(key=w.key, kind="window", film=w.film, curtains=w.curtains)
+               for w in room.windows if w.placed])
 
 
 class EvaluationDTO(DTO):
     schema_version: Literal[1] = 1
+    evaluation_version: int = EVALUATION_VERSION
     revision: int
     total: float
     breakdown: list[ScoreTerm]
     violations: list[str]
-    fall_overlap_cells: int
+    fall_overlap_cells: float
     regions: list[RegionDTO]
+    safety: SafetyDTO
+    natural_cost: float
+    mitigations: list[MitigationDTO]
 
 
 class CandidateDTO(DTO):
+    evaluation_version: int = EVALUATION_VERSION
     placements: list[PlacementDTO]
     cost: float
     score_breakdown: list[ScoreTerm]
@@ -139,6 +200,9 @@ class CandidateDTO(DTO):
     valid: bool
     accepted_steps: int
     source_sample_index: int
+    safety: SafetyDTO
+    natural_cost: float
+    mitigations: list[MitigationDTO]
 
 
 class JobDTO(DTO):
@@ -152,7 +216,9 @@ class JobDTO(DTO):
 
 def catalog_payload():
     return {
-        "schema_version": 1, "cell_size_m": CELL_SIZE_M,
+        "schema_version": 1, "cell_size_m": CELL_SIZE_M, "continuous_placement": True,
+        "evaluation_version": EVALUATION_VERSION,
+        "capabilities": ["safety_scenarios", "mitigation_inputs", "solid_wall_alignment"],
         "furniture": [asdict(p) | {"model_id": p.key} for p in FURNITURE_PRESETS.values()],
     }
 
@@ -166,8 +232,12 @@ def evaluate_payload(layout: LayoutDTO) -> EvaluationDTO:
         revision=layout.revision, total=result.score.total,
         breakdown=[ScoreTerm(name=k, value=v) for k, v in result.score.breakdown.items()],
         violations=result.score.violations, fall_overlap_cells=result.fall_overlap_cells,
+        safety=safety_payload(result.score.safety), natural_cost=result.score.natural_cost,
+        mitigations=mitigation_payload(room, placements),
         regions=[RegionDTO(kind=r.kind, key=r.key, x0=r.rect[0], y0=r.rect[1],
-                           x1=r.rect[2], y1=r.rect[3]) for r in result.regions],
+                           x1=r.rect[2], y1=r.rect[3],
+                           points=[PointDTO(x=x, y=y) for x, y in r.points],
+                           scenario_id=r.scenario_id, direction=r.direction, primary=r.primary) for r in result.regions],
     )
 
 
@@ -189,11 +259,14 @@ def optimize_payload(payload: dict) -> list[dict]:
         candidate = CandidateDTO(
             placements=[PlacementDTO(key=p.key, gx=p.gx if p.gx is not None else 0,
                                      gy=p.gy if p.gy is not None else 0,
-                                     rotation=p.rotation, placed=p.placed)
+                                     rotation=p.rotation, placed=p.placed, restraint=p.restraint,
+                                     installation_confirmed=p.installation_confirmed)
                         for p in s.placements.values()],
             cost=s.cost, score_breakdown=[ScoreTerm(name=k, value=v) for k, v in s.score_breakdown.items()],
             violations=s.violations, valid=valid,
             accepted_steps=s.accepted_steps, source_sample_index=s.source_sample_index,
+            safety=safety_payload(s.safety), natural_cost=s.natural_cost,
+            mitigations=mitigation_payload(room, s.placements),
         )
         results.append(candidate.model_dump())
     return results

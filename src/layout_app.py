@@ -17,11 +17,9 @@ from design_models import (
     get_rotated_size,
     rotate_direction,
 )
-from layout_cost import (
-    build_fall_zone_rect,
-)
-from layout_geometry import build_door_front_rect, build_window_scatter_rect
-from layout_service import evaluate_layout, generate_candidates
+from layout_geometry import build_door_front_rect
+from layout_service import evaluate_layout, generate_candidates, display_regions
+from layout_safety import bed_head_polygon
 from mcmc_solver import LayoutSolution
 
 
@@ -227,8 +225,19 @@ class FurnitureLayoutApp:
         self.canvas.delete("preview")
 
         if self.show_hazard_zones.get():
-            self.draw_door_front_zones()
-            self.draw_window_zones()
+            items = [build_furniture_from_placement(k, p) for k, p in self.placements.items()
+                     if p.placed and p.gx is not None and p.gy is not None]
+            for region in display_regions(self.room, items):
+                if region.kind == "bed_head":
+                    continue
+                coords = [v for point in region.points for v in self.grid_to_canvas(*point)]
+                if len(coords) >= 6:
+                    color = "#479765" if region.kind == "door_front" else "#d97706"
+                    self.canvas.create_polygon(*coords, fill="", outline=color, width=2,
+                        dash=(6, 4), tags=("fall_zone",))
+                    if region.scenario_id:
+                        self.canvas.create_text(*self.grid_to_canvas(*region.points[0]),
+                            text=region.scenario_id, anchor="sw", fill=color, tags=("fall_zone",))
 
         for key, placement in self.placements.items():
             if not placement.placed or placement.gx is None or placement.gy is None:
@@ -238,26 +247,6 @@ class FurnitureLayoutApp:
             if item.ceiling_mounted and not self.show_ceiling_furniture.get():
                 continue
             x0, y0, x1, y1 = self.rect_to_canvas(item.gx, item.gy, item.gw, item.gd)
-
-            fall_zone = build_fall_zone_rect(item)
-            if self.show_hazard_zones.get() and fall_zone is not None:
-                fx0, fy0, fx1, fy1 = self.rect_to_canvas(
-                    fall_zone[0],
-                    fall_zone[1],
-                    fall_zone[2] - fall_zone[0],
-                    fall_zone[3] - fall_zone[1],
-                )
-                self.canvas.create_rectangle(
-                    fx0,
-                    fy0,
-                    fx1,
-                    fy1,
-                    fill="#f8d8b8",
-                    outline="#d97706",
-                    width=2,
-                    dash=(6, 4),
-                    tags=("fall_zone",),
-                )
 
             color = self.furniture_colors.get(key, "#aaaaaa")
             width = 3 if key == self.selected_key else 1
@@ -288,19 +277,9 @@ class FurnitureLayoutApp:
             )
 
             if key == "bed":
-                pillow_side = rotate_direction(FURNITURE_PRESETS[key].pillow_side, placement.rotation)
-                if pillow_side is not None:
-                    hx0, hy0, hx1, hy1 = self.create_bed_head_marker(x0, y0, x1, y1, pillow_side)
-                    self.canvas.create_rectangle(
-                        hx0,
-                        hy0,
-                        hx1,
-                        hy1,
-                        fill="#eaf3ff",
-                        outline="#1f4e79",
-                        width=2,
-                        tags=("furniture",),
-                    )
+                coords = [v for point in bed_head_polygon(item) for v in self.grid_to_canvas(*point)]
+                self.canvas.create_polygon(*coords, fill="#eaf3ff", outline="#1f4e79",
+                                           width=2, tags=("furniture",))
 
         if self.canvas.find_withtag("fall_zone") and self.canvas.find_withtag("furniture"):
             self.canvas.tag_lower("fall_zone", "furniture")
@@ -319,29 +298,6 @@ class FurnitureLayoutApp:
             color = self.opening_colors[kind]
             self.canvas.create_line(x0, y0, x1, y1, fill=color, width=width, tags=("grid", f"opening:{kind}:{index}"))
             self.canvas.create_text((x0 + x1) / 2, (y0 + y1) / 2 - 10, text=label, fill=color, tags="grid")
-
-    def draw_window_zones(self) -> None:
-        for window in self.room.windows:
-            scatter_zone = build_window_scatter_rect(self.room, window)
-            if scatter_zone is None:
-                continue
-            x0, y0, x1, y1 = self.rect_to_canvas(
-                scatter_zone[0],
-                scatter_zone[1],
-                scatter_zone[2] - scatter_zone[0],
-                scatter_zone[3] - scatter_zone[1],
-            )
-            self.canvas.create_rectangle(
-                x0,
-                y0,
-                x1,
-                y1,
-                fill="#dbeafe",
-                outline="#2563eb",
-                width=2,
-                dash=(4, 3),
-                tags=("window_zone",),
-            )
 
     def draw_door_front_zones(self) -> None:
         for door in self.room.doors:
@@ -677,7 +633,13 @@ class FurnitureLayoutApp:
             self.set_result_text(f"Layout error: {exc}")
             return
 
-        lines = [f"Total cost: {score.total:.3f}", ""]
+        lines = [f"Evaluated conditions: {score.safety.status} (not a safety guarantee)",
+                 f"Safety findings: {score.safety.violation_count}",
+                 f"Failed escape checks: {score.safety.failed_route_checks}/{score.safety.route_checks}",
+                 "Hazard outlines show separate scenarios, not simultaneous falls.",
+                 f"Placement cost: {score.natural_cost:.3f}", ""]
+        lines.extend(f"Window {d.window_key} to {d.target_key}: {d.distance_m:.2f} m (no safety threshold)"
+                     for d in score.safety.window_distances)
         lines.append("Breakdown:")
         for name, value in score.breakdown.items():
             label = self.RULE_LABELS.get(name, name)
@@ -705,15 +667,16 @@ class FurnitureLayoutApp:
             sample_count=900,
             burn_in=250,
             sample_stride=15,
+            continuous=False,  # The legacy 2D editor still uses cardinal rectangles.
         )
         self.render_candidates()
         if not self.candidates:
-            self.set_result_text("No suggestions generated.")
+            self.set_result_text("No geometrically valid candidate found; this does not prove infeasibility.")
             return
         best = self.candidates[0]
         self.set_result_text(
             "Generated suggestions.\n"
-            f"Best cost: {best.cost:.3f}\n"
+            f"Evaluated conditions: {best.safety.status}; findings: {best.safety.violation_count}\n"
             f"Accepted steps: {best.accepted_steps}\n"
             "Choose a candidate to apply it."
         )
@@ -729,7 +692,7 @@ class FurnitureLayoutApp:
         for index, candidate in enumerate(self.candidates, start=1):
             button = tk.Button(
                 self.candidate_frame,
-                text=f"Candidate {index}  cost={candidate.cost:.2f}",
+                text=f"Candidate {index}  conditions={candidate.safety.status}  findings={candidate.safety.violation_count}",
                 anchor="w",
                 command=lambda value=index - 1: self.apply_candidate(value),
             )

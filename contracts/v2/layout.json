@@ -1,0 +1,64 @@
+{
+  "schema_version": 2,
+  "revision": 1,
+  "room": {
+    "vertices": [
+      {
+        "id": "v0",
+        "x": 0,
+        "y": 0
+      },
+      {
+        "id": "v1",
+        "x": 4,
+        "y": 0
+      },
+      {
+        "id": "v2",
+        "x": 4,
+        "y": 2
+      },
+      {
+        "id": "v3",
+        "x": 2,
+        "y": 2
+      },
+      {
+        "id": "v4",
+        "x": 2,
+        "y": 4
+      },
+      {
+        "id": "v5",
+        "x": 0,
+        "y": 4
+      }
+    ],
+    "doors": [
+      {
+        "key": "door_1",
+        "label": "ドア",
+        "edge_id": "v0",
+        "offset_m": 0.2,
+        "width_m": 0.8
+      }
+    ],
+    "windows": []
+  },
+  "placements": [
+    {
+      "key": "chair",
+      "x_m": 0.5,
+      "y_m": 2.5,
+      "rotation_deg": 23,
+      "placed": true
+    },
+    {
+      "key": "shelf",
+      "x_m": 2.8,
+      "y_m": 0.8,
+      "rotation_deg": 0,
+      "placed": true
+    }
+  ]
+}

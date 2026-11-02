@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import math
+from spatial_geometry import bounds, intersection_area, occupied_cells, rect_polygon
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from layout_safety import SafetyAssessment, assess_safety, bed_head_polygon, polygon_cells
+from wall_alignment import alignment_cost
 from typing import Callable
 
 from design_models import (
@@ -20,8 +23,9 @@ DEFAULT_RULE_WEIGHTS = {
     "circulation_penalty": 1.5,
     "pairwise_distance_penalty": 2.0,
     "conversation_penalty": 2.0,
-    "visual_balance_penalty": 1.5,
+    "visual_balance_penalty": 0.0,
     "alignment_penalty": 1.0,
+    "window_proximity_penalty": 1.0,
 }
 
 
@@ -30,6 +34,12 @@ class LayoutScore:
     total: float
     breakdown: dict[str, float]
     violations: list[str]
+    safety: SafetyAssessment = field(default_factory=SafetyAssessment)
+    natural_cost: float = 0.0
+
+    @property
+    def rank(self):
+        return (*self.safety.priority, self.natural_cost)
 
 
 def clamp(value: float, lower: float, upper: float) -> float:
@@ -53,48 +63,56 @@ def rect_intersection_area_cells(
     return (x1 - x0) * (y1 - y0)
 
 
-def build_fall_zone_rect(item: Furniture) -> tuple[int, int, int, int] | None:
+def _side_zone(item, direction, depth):
+    w, d = item.local_size
+    if direction == Direction.NORTH:
+        rect = (-w/2, d/2, w/2, d/2+depth)
+    elif direction == Direction.EAST:
+        rect = (w/2, -d/2, w/2+depth, d/2)
+    elif direction == Direction.SOUTH:
+        rect = (-w/2, -d/2-depth, w/2, -d/2)
+    else:
+        rect = (-w/2-depth, -d/2, -w/2, d/2)
+    return item.local_rect(rect)
+
+
+def _local_direction(item, direction, base_direction):
+    if base_direction is not None:
+        return base_direction
+    # Legacy Furniture constructors supply an already rotated cardinal direction.
+    from design_models import rotate_direction
+    return rotate_direction(direction, -item.rotation)
+
+
+def build_fall_zone_polygon(item):
     if item.fall_dir is None:
         return None
-
-    gx, gy, gw, gd, h = item.gx, item.gy, item.gw, item.gd, item.h_cell
-    if item.fall_dir == Direction.NORTH:
-        return (gx, gy + gd, gx + gw, gy + gd + h)
-    if item.fall_dir == Direction.EAST:
-        return (gx + gw, gy, gx + gw + h, gy + gd)
-    if item.fall_dir == Direction.SOUTH:
-        return (gx, gy - h, gx + gw, gy)
-    if item.fall_dir == Direction.WEST:
-        return (gx - h, gy, gx, gy + gd)
-    return None
+    return _side_zone(item, _local_direction(item, item.fall_dir, item.base_fall_dir), item.h_cell)
 
 
-def build_bed_head_zone_rect(bed: Furniture) -> tuple[int, int, int, int]:
-    if bed.pillow_side is None:
-        raise ValueError(f"{bed.name}: bed must have pillow_side")
-
-    band = 2
-    if bed.pillow_side == Direction.NORTH:
-        return (bed.gx, bed.gy + bed.gd, bed.gx + bed.gw, bed.gy + bed.gd + band)
-    if bed.pillow_side == Direction.SOUTH:
-        return (bed.gx, bed.gy - band, bed.gx + bed.gw, bed.gy)
-    if bed.pillow_side == Direction.EAST:
-        return (bed.gx + bed.gw, bed.gy, bed.gx + bed.gw + band, bed.gy + bed.gd)
-    return (bed.gx - band, bed.gy, bed.gx, bed.gy + bed.gd)
+def build_bed_head_zone_polygon(item):
+    return bed_head_polygon(item)
 
 
-def total_fall_hazard_overlap_cells(items: list[Furniture]) -> int:
+def build_fall_zone_rect(item):
+    polygon = build_fall_zone_polygon(item)
+    return bounds(polygon) if polygon else None
+
+
+def build_bed_head_zone_rect(item):
+    return bounds(build_bed_head_zone_polygon(item))
+
+
+def total_fall_hazard_overlap_cells(items: list[Furniture]) -> float:
     beds = [item for item in items if item.furniture_type == FurnitureType.BED]
-    total_overlap = 0
+    total = 0.0
     for item in items:
         if item.furniture_type == FurnitureType.BED:
             continue
-        zone = build_fall_zone_rect(item)
-        if zone is None:
-            continue
-        for bed in beds:
-            total_overlap += rect_intersection_area_cells(zone, rect_of(bed))
-    return total_overlap
+        zone = build_fall_zone_polygon(item)
+        if zone:
+            total += sum(intersection_area(zone, bed.footprint) for bed in beds)
+    return total
 
 
 def _distance_penalty(distance: float, minimum: float, maximum: float) -> float:
@@ -106,16 +124,17 @@ def _distance_penalty(distance: float, minimum: float, maximum: float) -> float:
 
 
 def _iter_cells(rect: tuple[int, int, int, int]) -> list[tuple[int, int]]:
-    return [(x, y) for x in range(rect[0], rect[2]) for y in range(rect[1], rect[3])]
+    return [(x, y) for x in range(math.floor(rect[0]), math.ceil(rect[2])) for y in range(math.floor(rect[1]), math.ceil(rect[3]))]
 
 
 def _build_occupancy(room: Room, items: list[Furniture]) -> list[list[bool]]:
     grid = [[False for _ in range(room.grid_h)] for _ in range(room.grid_w)]
     for item in items:
-        for x in range(item.gx, item.gx + item.gw):
-            for y in range(item.gy, item.gy + item.gd):
-                if 0 <= x < room.grid_w and 0 <= y < room.grid_h:
-                    grid[x][y] = True
+        if item.ceiling_mounted:
+            continue
+        for x, y in polygon_cells(item.footprint):
+            if 0 <= x < room.grid_w and 0 <= y < room.grid_h:
+                grid[x][y] = True
     return grid
 
 
@@ -128,56 +147,30 @@ def _distance_to_nearest_wall(room: Room, item: Furniture) -> int:
     )
 
 
-def _clearance_rects(item: Furniture) -> list[tuple[int, int, int, int]]:
+def _clearance_polygons(item):
     rule = item.clearance
     if rule is None:
         return []
-
+    w, d = item.local_size
     margin = rule.min_cells
-    rects: list[tuple[int, int, int, int]] = []
     if rule.mode == "all":
-        rects.append((item.gx - margin, item.gy - margin, item.gx + item.gw + margin, item.gy + item.gd + margin))
-        return rects
+        return [item.local_rect((-w/2-margin, -d/2-margin, w/2+margin, d/2+margin))]
     if rule.mode == "front":
-        direction = item.rotation % 4
-        if direction == 0:
-            rects.append((item.gx, item.gy + item.gd, item.gx + item.gw, item.gy + item.gd + margin))
-        elif direction == 1:
-            rects.append((item.gx + item.gw, item.gy, item.gx + item.gw + margin, item.gy + item.gd))
-        elif direction == 2:
-            rects.append((item.gx, item.gy - margin, item.gx + item.gw, item.gy))
-        else:
-            rects.append((item.gx - margin, item.gy, item.gx, item.gy + item.gd))
-        return rects
-    if item.gw >= item.gd:
-        rects.append((item.gx, item.gy - margin, item.gx + item.gw, item.gy))
-        rects.append((item.gx, item.gy + item.gd, item.gx + item.gw, item.gy + item.gd + margin))
-    else:
-        rects.append((item.gx - margin, item.gy, item.gx, item.gy + item.gd))
-        rects.append((item.gx + item.gw, item.gy, item.gx + item.gw + margin, item.gy + item.gd))
-    return rects
+        return [_side_zone(item, Direction.NORTH, margin)]
+    directions = (Direction.NORTH, Direction.SOUTH) if w >= d else (Direction.EAST, Direction.WEST)
+    return [_side_zone(item, direction, margin) for direction in directions]
 
 
 def score_clearance_violation(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
-    del room
-    occupied: dict[tuple[int, int], str] = {}
-    for item in items:
-        for cell in _iter_cells(rect_of(item)):
-            occupied[cell] = item.name
-
     score = 0.0
-    violations: list[str] = []
+    violations = []
     for item in items:
-        for rect in _clearance_rects(item):
-            overlap_cells = 0
-            for cell in _iter_cells(rect):
-                owner = occupied.get(cell)
-                if owner is None or owner == item.name:
-                    continue
-                overlap_cells += 1
-            if overlap_cells > 0:
-                score += overlap_cells
-                violations.append(f"{item.name} clearance overlaps occupied cells ({overlap_cells})")
+        for zone in _clearance_polygons(item):
+            area = sum(intersection_area(zone, other.footprint) for other in items
+                       if other.key != item.key and other.ceiling_mounted == item.ceiling_mounted)
+            if area > 1e-6:
+                score += area
+                violations.append(f"{item.name} clearance overlaps occupied area ({area:.2f} cell units squared)")
     return score, violations
 
 
@@ -194,6 +187,8 @@ def score_circulation_penalty(room: Room, items: list[Furniture]) -> tuple[float
         for y in range(room.grid_h)
         if not occupied[x][y]
     }
+    if hasattr(room, "boundary"):
+        free_cells &= room.floor_cells
     if not free_cells:
         return 100.0, ["No free cells remain for circulation"]
 
@@ -285,12 +280,12 @@ def score_conversation_penalty(room: Room, items: list[Furniture]) -> tuple[floa
 
 
 def score_visual_balance_penalty(room: Room, items: list[Furniture]) -> tuple[float, list[str]]:
-    total_area = sum(item.gw * item.gd for item in items)
+    total_area = sum((item.local_size[0] * item.local_size[1]) for item in items)
     if total_area <= 0:
         return 0.0, []
 
-    centroid_x = sum((item.gx + item.gw / 2.0) * item.gw * item.gd for item in items) / total_area
-    centroid_y = sum((item.gy + item.gd / 2.0) * item.gw * item.gd for item in items) / total_area
+    centroid_x = sum((item.gx + item.gw / 2.0) * (item.local_size[0] * item.local_size[1]) for item in items) / total_area
+    centroid_y = sum((item.gy + item.gd / 2.0) * (item.local_size[0] * item.local_size[1]) for item in items) / total_area
     room_center = (room.grid_w / 2.0, room.grid_h / 2.0)
     diagonal = math.hypot(room.grid_w, room.grid_h)
     distance = math.dist((centroid_x, centroid_y), room_center)
@@ -307,10 +302,10 @@ def score_alignment_penalty(room: Room, items: list[Furniture]) -> tuple[float, 
     for item in items:
         if item.furniture_type not in {FurnitureType.STORAGE, FurnitureType.TV_STAND, FurnitureType.BED}:
             continue
-        wall_distance = _distance_to_nearest_wall(room, item)
-        if wall_distance > 1:
-            score += wall_distance - 1
-            violations.append(f"{item.name} is not anchored near a wall")
+        penalty = alignment_cost(room, item)
+        score += penalty
+        if penalty > 1:
+            violations.append(f"{item.name}: preferred face is not aligned with a solid wall")
     return score, violations
 
 
@@ -338,13 +333,30 @@ def evaluate_layout_cost(
     breakdown = {name: 0.0 for name in rule_funcs}
     violations: list[str] = []
     for name, func in rule_funcs.items():
-        if name not in active_terms:
+        if name not in active_terms or merged_weights.get(name, 1.0) == 0:
             continue
         raw_score, local_violations = func(room, items)
         weighted_score = raw_score * merged_weights.get(name, 1.0)
         breakdown[name] = weighted_score
         violations.extend(local_violations)
-    return LayoutScore(total=sum(breakdown.values()), breakdown=breakdown, violations=violations)
+    safety = assess_safety(room, items)
+    breakdown["window_proximity_penalty"] = sum(d.penalty for d in safety.window_distances) * merged_weights["window_proximity_penalty"]
+    natural = sum(breakdown.values())
+    # Bounded subordinate terms cannot compensate one discrete safety violation.
+    # Final candidate ordering additionally uses an exact lexicographic rank.
+    safety_cost = 1000.0 * safety.violation_count
+    area_cost = 100.0 * safety.overlap_area_m2 / (1+safety.overlap_area_m2)
+    primary_cost = 10.0 * safety.primary_overlap_area_m2 / (1+safety.primary_overlap_area_m2)
+    natural_energy = natural/(1+natural)
+    breakdown["safety_violations"] = safety_cost
+    breakdown["safety_overlap"] = area_cost
+    breakdown["primary_overlap"] = primary_cost
+    # Raw comfort components are retained above for interpretation. 'total' is
+    # search energy, not a sum of quantities with incompatible units.
+    violations.extend(f"{i.kind}: {i.scenario_id} -> {i.target_key}" for i in safety.issues)
+    violations.extend(safety.unassessed)
+    return LayoutScore(safety_cost+area_cost+primary_cost+natural_energy, breakdown,
+                       violations, safety, natural)
 
 
 def evaluate_layout_from_placements(

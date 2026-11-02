@@ -1,0 +1,1651 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Furniture Layout API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/catalog": {
+      "get": {
+        "summary": "Catalog",
+        "operationId": "catalog_api_v1_catalog_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evaluate": {
+      "post": {
+        "summary": "Evaluate",
+        "operationId": "evaluate_api_v1_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/optimization-jobs": {
+      "post": {
+        "summary": "Optimize",
+        "operationId": "optimize_api_v1_optimization_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptimizationDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/optimization-jobs/{job_id}": {
+      "get": {
+        "summary": "Job",
+        "operationId": "job_api_v1_optimization_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/catalog": {
+      "get": {
+        "summary": "Catalog",
+        "operationId": "catalog_api_v2_catalog_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/evaluate": {
+      "post": {
+        "summary": "Evaluate",
+        "operationId": "evaluate_api_v2_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutV2"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/optimization-jobs": {
+      "post": {
+        "summary": "Optimize",
+        "operationId": "optimize_api_v2_optimization_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptimizationV2"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/optimization-jobs/{job_id}": {
+      "get": {
+        "summary": "Job",
+        "operationId": "job_api_v2_optimization_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CandidateDTO": {
+        "properties": {
+          "evaluation_version": {
+            "type": "integer",
+            "title": "Evaluation Version",
+            "default": 2
+          },
+          "placements": {
+            "items": {
+              "$ref": "#/components/schemas/PlacementDTO"
+            },
+            "type": "array",
+            "title": "Placements"
+          },
+          "cost": {
+            "type": "number",
+            "title": "Cost"
+          },
+          "score_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreTerm"
+            },
+            "type": "array",
+            "title": "Score Breakdown"
+          },
+          "violations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Violations"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "accepted_steps": {
+            "type": "integer",
+            "title": "Accepted Steps"
+          },
+          "source_sample_index": {
+            "type": "integer",
+            "title": "Source Sample Index"
+          },
+          "safety": {
+            "$ref": "#/components/schemas/SafetyDTO"
+          },
+          "natural_cost": {
+            "type": "number",
+            "title": "Natural Cost"
+          },
+          "mitigations": {
+            "items": {
+              "$ref": "#/components/schemas/MitigationDTO"
+            },
+            "type": "array",
+            "title": "Mitigations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "placements",
+          "cost",
+          "score_breakdown",
+          "violations",
+          "valid",
+          "accepted_steps",
+          "source_sample_index",
+          "safety",
+          "natural_cost",
+          "mitigations"
+        ],
+        "title": "CandidateDTO"
+      },
+      "CandidateV2": {
+        "properties": {
+          "evaluation_version": {
+            "type": "integer",
+            "title": "Evaluation Version",
+            "default": 3
+          },
+          "placements": {
+            "items": {
+              "$ref": "#/components/schemas/PlacementV2"
+            },
+            "type": "array",
+            "title": "Placements"
+          },
+          "cost": {
+            "type": "number",
+            "title": "Cost"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "safety": {
+            "$ref": "#/components/schemas/SafetyDTO"
+          },
+          "natural_cost": {
+            "type": "number",
+            "title": "Natural Cost"
+          },
+          "violations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Violations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "placements",
+          "cost",
+          "valid",
+          "safety",
+          "natural_cost",
+          "violations"
+        ],
+        "title": "CandidateV2"
+      },
+      "EvaluationDTO": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "evaluation_version": {
+            "type": "integer",
+            "title": "Evaluation Version",
+            "default": 2
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "total": {
+            "type": "number",
+            "title": "Total"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreTerm"
+            },
+            "type": "array",
+            "title": "Breakdown"
+          },
+          "violations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Violations"
+          },
+          "fall_overlap_cells": {
+            "type": "number",
+            "title": "Fall Overlap Cells"
+          },
+          "regions": {
+            "items": {
+              "$ref": "#/components/schemas/RegionDTO"
+            },
+            "type": "array",
+            "title": "Regions"
+          },
+          "safety": {
+            "$ref": "#/components/schemas/SafetyDTO"
+          },
+          "natural_cost": {
+            "type": "number",
+            "title": "Natural Cost"
+          },
+          "mitigations": {
+            "items": {
+              "$ref": "#/components/schemas/MitigationDTO"
+            },
+            "type": "array",
+            "title": "Mitigations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "revision",
+          "total",
+          "breakdown",
+          "violations",
+          "fall_overlap_cells",
+          "regions",
+          "safety",
+          "natural_cost",
+          "mitigations"
+        ],
+        "title": "EvaluationDTO"
+      },
+      "EvaluationV2": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 2,
+            "title": "Schema Version",
+            "default": 2
+          },
+          "evaluation_version": {
+            "type": "integer",
+            "title": "Evaluation Version",
+            "default": 3
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "area_m2": {
+            "type": "number",
+            "title": "Area M2"
+          },
+          "tatami": {
+            "type": "number",
+            "title": "Tatami"
+          },
+          "total": {
+            "type": "number",
+            "title": "Total"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreTerm"
+            },
+            "type": "array",
+            "title": "Breakdown"
+          },
+          "violations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Violations"
+          },
+          "safety": {
+            "$ref": "#/components/schemas/SafetyDTO"
+          },
+          "natural_cost": {
+            "type": "number",
+            "title": "Natural Cost"
+          },
+          "mitigations": {
+            "items": {
+              "$ref": "#/components/schemas/MitigationDTO"
+            },
+            "type": "array",
+            "title": "Mitigations"
+          },
+          "regions": {
+            "items": {
+              "$ref": "#/components/schemas/RegionV2"
+            },
+            "type": "array",
+            "title": "Regions"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "revision",
+          "area_m2",
+          "tatami",
+          "total",
+          "breakdown",
+          "violations",
+          "safety",
+          "natural_cost",
+          "mitigations",
+          "regions"
+        ],
+        "title": "EvaluationV2"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "JobDTO": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateDTO"
+            },
+            "type": "array",
+            "title": "Candidates"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "revision",
+          "status"
+        ],
+        "title": "JobDTO"
+      },
+      "JobV2": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 2,
+            "title": "Schema Version",
+            "default": 2
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateV2"
+            },
+            "type": "array",
+            "title": "Candidates"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "revision",
+          "status"
+        ],
+        "title": "JobV2"
+      },
+      "LayoutDTO": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "revision": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "default": 0
+          },
+          "room": {
+            "$ref": "#/components/schemas/RoomDTO"
+          },
+          "placements": {
+            "items": {
+              "$ref": "#/components/schemas/PlacementDTO"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Placements"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "room",
+          "placements"
+        ],
+        "title": "LayoutDTO"
+      },
+      "LayoutV2": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 2,
+            "title": "Schema Version",
+            "default": 2
+          },
+          "revision": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "default": 0
+          },
+          "room": {
+            "$ref": "#/components/schemas/RoomV2"
+          },
+          "placements": {
+            "items": {
+              "$ref": "#/components/schemas/PlacementV2"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "title": "Placements"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "room"
+        ],
+        "title": "LayoutV2"
+      },
+      "MitigationDTO": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "furniture",
+              "window"
+            ],
+            "title": "Kind"
+          },
+          "restraint": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "wall_bracket",
+              "belt",
+              "pole",
+              "pole_combination",
+              "other"
+            ],
+            "title": "Restraint",
+            "default": "unknown"
+          },
+          "installation_confirmed": {
+            "type": "boolean",
+            "title": "Installation Confirmed",
+            "default": false
+          },
+          "film": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "present"
+            ],
+            "title": "Film",
+            "default": "unknown"
+          },
+          "curtains": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "present"
+            ],
+            "title": "Curtains",
+            "default": "unknown"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "kind"
+        ],
+        "title": "MitigationDTO"
+      },
+      "OpeningDTO": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Label",
+            "default": "Opening"
+          },
+          "wall": {
+            "type": "string",
+            "enum": [
+              "LEFT",
+              "RIGHT",
+              "TOP",
+              "BOTTOM"
+            ],
+            "title": "Wall"
+          },
+          "offset": {
+            "type": "integer",
+            "maximum": 64.0,
+            "minimum": 0.0,
+            "title": "Offset"
+          },
+          "length": {
+            "type": "integer",
+            "maximum": 64.0,
+            "minimum": 1.0,
+            "title": "Length"
+          },
+          "placed": {
+            "type": "boolean",
+            "title": "Placed",
+            "default": true
+          },
+          "film": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "present"
+            ],
+            "title": "Film",
+            "default": "unknown"
+          },
+          "curtains": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "present"
+            ],
+            "title": "Curtains",
+            "default": "unknown"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "wall",
+          "offset",
+          "length"
+        ],
+        "title": "OpeningDTO"
+      },
+      "OpeningV2": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Label",
+            "default": "Opening"
+          },
+          "edge_id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Edge Id"
+          },
+          "offset_m": {
+            "type": "number",
+            "maximum": 24.0,
+            "minimum": 0.0,
+            "title": "Offset M"
+          },
+          "width_m": {
+            "type": "number",
+            "maximum": 24.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Width M"
+          },
+          "placed": {
+            "type": "boolean",
+            "title": "Placed",
+            "default": true
+          },
+          "film": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "present"
+            ],
+            "title": "Film",
+            "default": "unknown"
+          },
+          "curtains": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "present"
+            ],
+            "title": "Curtains",
+            "default": "unknown"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "edge_id",
+          "offset_m",
+          "width_m"
+        ],
+        "title": "OpeningV2"
+      },
+      "OptimizationDTO": {
+        "properties": {
+          "layout": {
+            "$ref": "#/components/schemas/LayoutDTO"
+          },
+          "fixed_keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "title": "Fixed Keys"
+          },
+          "candidate_count": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Candidate Count",
+            "default": 3
+          },
+          "sample_count": {
+            "type": "integer",
+            "maximum": 5000.0,
+            "minimum": 2.0,
+            "title": "Sample Count",
+            "default": 900
+          },
+          "burn_in": {
+            "type": "integer",
+            "maximum": 4999.0,
+            "minimum": 0.0,
+            "title": "Burn In",
+            "default": 250
+          },
+          "sample_stride": {
+            "type": "integer",
+            "maximum": 5000.0,
+            "minimum": 1.0,
+            "title": "Sample Stride",
+            "default": 15
+          },
+          "rng_seed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rng Seed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "layout"
+        ],
+        "title": "OptimizationDTO"
+      },
+      "OptimizationV2": {
+        "properties": {
+          "layout": {
+            "$ref": "#/components/schemas/LayoutV2"
+          },
+          "fixed_keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "title": "Fixed Keys"
+          },
+          "candidate_count": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Candidate Count",
+            "default": 3
+          },
+          "sample_count": {
+            "type": "integer",
+            "maximum": 5000.0,
+            "minimum": 2.0,
+            "title": "Sample Count",
+            "default": 900
+          },
+          "burn_in": {
+            "type": "integer",
+            "maximum": 4999.0,
+            "minimum": 0.0,
+            "title": "Burn In",
+            "default": 250
+          },
+          "sample_stride": {
+            "type": "integer",
+            "maximum": 5000.0,
+            "minimum": 1.0,
+            "title": "Sample Stride",
+            "default": 15
+          },
+          "rng_seed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rng Seed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "layout"
+        ],
+        "title": "OptimizationV2"
+      },
+      "PlacementDTO": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Key"
+          },
+          "gx": {
+            "type": "number",
+            "maximum": 64.0,
+            "minimum": -64.0,
+            "title": "Gx",
+            "default": 0
+          },
+          "gy": {
+            "type": "number",
+            "maximum": 64.0,
+            "minimum": -64.0,
+            "title": "Gy",
+            "default": 0
+          },
+          "rotation": {
+            "type": "number",
+            "exclusiveMaximum": 4.0,
+            "minimum": 0.0,
+            "title": "Rotation",
+            "description": "Clockwise quarter turns, fractional values allowed (0.5 = 45 degrees)",
+            "default": 0
+          },
+          "placed": {
+            "type": "boolean",
+            "title": "Placed",
+            "default": false
+          },
+          "restraint": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "wall_bracket",
+              "belt",
+              "pole",
+              "pole_combination",
+              "other"
+            ],
+            "title": "Restraint",
+            "default": "unknown"
+          },
+          "installation_confirmed": {
+            "type": "boolean",
+            "title": "Installation Confirmed",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "title": "PlacementDTO"
+      },
+      "PlacementV2": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Key"
+          },
+          "x_m": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": -100.0,
+            "title": "X M",
+            "default": 0
+          },
+          "y_m": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": -100.0,
+            "title": "Y M",
+            "default": 0
+          },
+          "rotation_deg": {
+            "type": "number",
+            "exclusiveMaximum": 360.0,
+            "minimum": 0.0,
+            "title": "Rotation Deg",
+            "default": 0
+          },
+          "placed": {
+            "type": "boolean",
+            "title": "Placed",
+            "default": false
+          },
+          "restraint": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "none",
+              "wall_bracket",
+              "belt",
+              "pole",
+              "pole_combination",
+              "other"
+            ],
+            "title": "Restraint",
+            "default": "unknown"
+          },
+          "installation_confirmed": {
+            "type": "boolean",
+            "title": "Installation Confirmed",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "title": "PlacementV2"
+      },
+      "PointDTO": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "PointDTO"
+      },
+      "PointMetersV2": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "PointMetersV2"
+      },
+      "RegionDTO": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "x0": {
+            "type": "number",
+            "title": "X0"
+          },
+          "y0": {
+            "type": "number",
+            "title": "Y0"
+          },
+          "x1": {
+            "type": "number",
+            "title": "X1"
+          },
+          "y1": {
+            "type": "number",
+            "title": "Y1"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/PointDTO"
+            },
+            "type": "array",
+            "title": "Points"
+          },
+          "scenario_id": {
+            "type": "string",
+            "title": "Scenario Id",
+            "default": ""
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction",
+            "default": ""
+          },
+          "primary": {
+            "type": "boolean",
+            "title": "Primary",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "key",
+          "x0",
+          "y0",
+          "x1",
+          "y1",
+          "points"
+        ],
+        "title": "RegionDTO"
+      },
+      "RegionV2": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "scenario_id": {
+            "type": "string",
+            "title": "Scenario Id",
+            "default": ""
+          },
+          "primary": {
+            "type": "boolean",
+            "title": "Primary",
+            "default": false
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/PointMetersV2"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "key",
+          "points"
+        ],
+        "title": "RegionV2"
+      },
+      "RoomDTO": {
+        "properties": {
+          "grid_w": {
+            "type": "integer",
+            "maximum": 64.0,
+            "minimum": 4.0,
+            "title": "Grid W"
+          },
+          "grid_h": {
+            "type": "integer",
+            "maximum": 64.0,
+            "minimum": 4.0,
+            "title": "Grid H"
+          },
+          "ceiling_height_m": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 2.0,
+            "title": "Ceiling Height M",
+            "default": 2.5
+          },
+          "doors": {
+            "items": {
+              "$ref": "#/components/schemas/OpeningDTO"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "title": "Doors"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/OpeningDTO"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "title": "Windows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "grid_w",
+          "grid_h"
+        ],
+        "title": "RoomDTO"
+      },
+      "RoomV2": {
+        "properties": {
+          "vertices": {
+            "items": {
+              "$ref": "#/components/schemas/VertexV2"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "minItems": 3,
+            "title": "Vertices"
+          },
+          "ceiling_height_m": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 2.0,
+            "title": "Ceiling Height M",
+            "default": 2.5
+          },
+          "doors": {
+            "items": {
+              "$ref": "#/components/schemas/OpeningV2"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "title": "Doors"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/OpeningV2"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "title": "Windows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "vertices"
+        ],
+        "title": "RoomV2"
+      },
+      "SafetyDTO": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "met",
+              "unmet",
+              "not_evaluated"
+            ],
+            "title": "Status"
+          },
+          "violation_count": {
+            "type": "integer",
+            "title": "Violation Count"
+          },
+          "overlap_area_m2": {
+            "type": "number",
+            "title": "Overlap Area M2"
+          },
+          "primary_overlap_area_m2": {
+            "type": "number",
+            "title": "Primary Overlap Area M2"
+          },
+          "route_checks": {
+            "type": "integer",
+            "title": "Route Checks"
+          },
+          "failed_route_checks": {
+            "type": "integer",
+            "title": "Failed Route Checks"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/SafetyIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "window_distances": {
+            "items": {
+              "$ref": "#/components/schemas/WindowDistance"
+            },
+            "type": "array",
+            "title": "Window Distances"
+          },
+          "unassessed": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unassessed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "violation_count",
+          "overlap_area_m2",
+          "primary_overlap_area_m2",
+          "route_checks",
+          "failed_route_checks",
+          "issues",
+          "window_distances",
+          "unassessed"
+        ],
+        "title": "SafetyDTO"
+      },
+      "SafetyIssue": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "scenario_id": {
+            "type": "string",
+            "title": "Scenario Id"
+          },
+          "source_key": {
+            "type": "string",
+            "title": "Source Key"
+          },
+          "target_key": {
+            "type": "string",
+            "title": "Target Key"
+          },
+          "area_m2": {
+            "type": "number",
+            "title": "Area M2",
+            "default": 0.0
+          },
+          "primary": {
+            "type": "boolean",
+            "title": "Primary",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "scenario_id",
+          "source_key",
+          "target_key"
+        ],
+        "title": "SafetyIssue"
+      },
+      "ScoreTerm": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "title": "ScoreTerm"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VertexV2": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "x": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": -100.0,
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": -100.0,
+            "title": "Y"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "x",
+          "y"
+        ],
+        "title": "VertexV2"
+      },
+      "WindowDistance": {
+        "properties": {
+          "window_key": {
+            "type": "string",
+            "title": "Window Key"
+          },
+          "target_key": {
+            "type": "string",
+            "title": "Target Key"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "penalty": {
+            "type": "number",
+            "title": "Penalty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window_key",
+          "target_key",
+          "distance_m",
+          "penalty"
+        ],
+        "title": "WindowDistance"
+      }
+    }
+  }
+}

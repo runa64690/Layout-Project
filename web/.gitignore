@@ -8,6 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.npm-cache/
 dist
 .vite
 dist-ssr
@@ -26,8 +27,10 @@ dist-ssr
 
 # Python
 *.py[cod]
-.coverage
+.coveraSketchfabge
 htmlcov/
+.coverage
+.coverage.*
 
 # Unity generated files
 unity/Build/

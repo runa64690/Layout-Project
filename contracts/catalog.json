@@ -1,6 +1,13 @@
 {
   "schema_version": 1,
   "cell_size_m": 0.25,
+  "continuous_placement": true,
+  "evaluation_version": 2,
+  "capabilities": [
+    "safety_scenarios",
+    "mitigation_inputs",
+    "solid_wall_alignment"
+  ],
   "furniture": [
     {
       "key": "shelf",
